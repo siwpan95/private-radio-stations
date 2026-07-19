@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PyRadio Companion</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main id="app">
+    <!-- 顶栏 -->
+    <header class="topbar">
+      <div class="logo">📻</div>
+      <div class="brand">
+        <div class="name">PyRadio</div>
+        <div class="sub" id="mode">连接中…</div>
+      </div>
+      <button class="icon-btn" id="openOptions" title="设置">⚙</button>
+    </header>
+
+    <!-- 正在播放 -->
+    <section class="now">
+      <div class="cover" id="cover"><div class="cover-empty">♪</div></div>
+      <div class="meta">
+        <div class="title" id="title">—</div>
+        <div class="sub" id="sub">—</div>
+      </div>
+    </section>
+
+    <!-- 控制 -->
+    <section class="controls">
+      <button class="ctrl" id="prev" title="上一首/下一首">⏭</button>
+      <button class="ctrl primary" id="playpause" title="暂停/继续">⏸</button>
+      <button class="ctrl" id="announce" title="发布到 Discord/Telegram">🔗</button>
+    </section>
+
+    <!-- 歌词 -->
+    <section class="lyrics-wrap">
+      <div class="lyrics-head">
+        <span>🎤 歌词</span>
+        <span class="badge" id="lyricBadge" hidden>LRC</span>
+      </div>
+      <div class="lyrics" id="lyrics"><div class="empty">（暂无歌词）</div></div>
+    </section>
+
+    <div class="status" id="status">本地电台 · localhost:8000</div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
