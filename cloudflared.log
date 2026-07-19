@@ -1,0 +1,61 @@
+2026-07-19T12:46:13Z INF Thank you for trying Cloudflare Tunnel. Doing so, without a Cloudflare account, is a quick way to experiment and try it out. However, be aware that these account-less Tunnels have no uptime guarantee, are subject to the Cloudflare Online Services Terms of Use (https://www.cloudflare.com/website-terms/), and Cloudflare reserves the right to investigate your use of Tunnels for violations of such terms. If you intend to use Tunnels in production you should use a pre-created named tunnel by following: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps
+2026-07-19T12:46:13Z INF Requesting new quick Tunnel on trycloudflare.com...
+2026-07-19T12:46:17Z INF +--------------------------------------------------------------------------------------------+
+2026-07-19T12:46:17Z INF |  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):  |
+2026-07-19T12:46:17Z INF |  https://admission-locally-trademark-fabulous.trycloudflare.com                            |
+2026-07-19T12:46:17Z INF +--------------------------------------------------------------------------------------------+
+2026-07-19T12:46:17Z INF Cannot determine default configuration path. No file [config.yml config.yaml] in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp]
+2026-07-19T12:46:17Z INF Version 2026.7.2 (Checksum cdb5d4432f6ae1595654a692a51308b69d2bf7af961f5578d9391837cf072df9)
+2026-07-19T12:46:17Z INF GOOS: windows, GOVersion: go1.26.4, GoArch: amd64
+2026-07-19T12:46:17Z INF Settings: map[ha-connections:1 no-autoupdate:true protocol:quic url:http://localhost:8000]
+2026-07-19T12:46:17Z INF cloudflared will not automatically update on Windows systems.
+2026-07-19T12:46:28Z ERR Failed to fetch features, default to disable error="lookup cfd-features.argotunnel.com: dnsquery: This operation returned because the timeout period expired."
+2026-07-19T12:46:28Z INF Generated Connector ID: 00c87261-2a70-4d46-a10a-99132f4e14bb
+2026-07-19T12:46:39Z WRN Unable to lookup protocol percentage.
+2026-07-19T12:46:39Z INF Initial protocol quic
+2026-07-19T12:46:39Z INF ICMP proxy will use 192.168.1.197 as source for IPv4
+2026-07-19T12:46:39Z INF ICMP proxy will use fe80::a707:bf2b:6190:7371 in zone tawe as source for IPv6
+2026-07-19T12:46:39Z INF cloudflared does not support loading the system root certificate pool on Windows. Please use --origin-ca-pool <PATH> to specify the path to the certificate pool
+2026-07-19T12:46:39Z INF ICMP proxy will use 192.168.1.197 as source for IPv4
+2026-07-19T12:46:39Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(65074) CurveP256] connIndex=0 event=0 ip=198.41.192.67
+2026-07-19T12:46:39Z INF ICMP proxy will use fe80::a707:bf2b:6190:7371 in zone tawe as source for IPv6
+2026-07-19T12:46:39Z INF Starting metrics server on 127.0.0.1:20241/metrics
+2026-07-19T12:46:40Z INF Registered tunnel connection connIndex=0 connection=a448711c-03af-46e1-b3a2-b881a3786784 event=0 ip=198.41.192.67 location=lax05 protocol=quic
+2026-07-19T12:46:40Z INF +-------------------------------------------------------------------------------------+
+2026-07-19T12:46:40Z INF |                               CONNECTIVITY PRE-CHECKS                               |
+2026-07-19T12:46:40Z INF +-------------------------------------------------------------------------------------+
+2026-07-19T12:46:40Z INF |  COMPONENT         TARGET                     STATUS  DETAILS                       |
+2026-07-19T12:46:40Z INF |  DNS Resolution    region1.v2.argotunnel.com  PASS    DNS Resolved successfully     |
+2026-07-19T12:46:40Z INF |  DNS Resolution    region2.v2.argotunnel.com  PASS    DNS Resolved successfully     |
+2026-07-19T12:46:40Z INF |  UDP Connectivity  region1.v2.argotunnel.com  PASS    QUIC connection successful    |
+2026-07-19T12:46:40Z INF |  UDP Connectivity  region2.v2.argotunnel.com  PASS    QUIC connection successful    |
+2026-07-19T12:46:40Z INF |  TCP Connectivity  region1.v2.argotunnel.com  PASS    HTTP/2 connection successful  |
+2026-07-19T12:46:40Z INF |  TCP Connectivity  region2.v2.argotunnel.com  PASS    HTTP/2 connection successful  |
+2026-07-19T12:46:40Z INF |  Cloudflare API    api.cloudflare.com:443     PASS    API is reachable              |
+2026-07-19T12:46:40Z INF |                                                                                     |
+2026-07-19T12:46:40Z INF |  SUMMARY: Environment is healthy. cloudflared will use 'quic' as primary protocol.  |
+2026-07-19T12:46:40Z INF +-------------------------------------------------------------------------------------+
+2026-07-19T12:46:40Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=9a4acf5d-5c5d-44a0-a2c8-ee87305d83c1 status=pass target=region1.v2.argotunnel.com
+2026-07-19T12:46:40Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=9a4acf5d-5c5d-44a0-a2c8-ee87305d83c1 status=pass target=region2.v2.argotunnel.com
+2026-07-19T12:46:40Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=9a4acf5d-5c5d-44a0-a2c8-ee87305d83c1 status=pass target=region1.v2.argotunnel.com
+2026-07-19T12:46:40Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=9a4acf5d-5c5d-44a0-a2c8-ee87305d83c1 status=pass target=region2.v2.argotunnel.com
+2026-07-19T12:46:40Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=9a4acf5d-5c5d-44a0-a2c8-ee87305d83c1 status=pass target=region1.v2.argotunnel.com
+2026-07-19T12:46:40Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=9a4acf5d-5c5d-44a0-a2c8-ee87305d83c1 status=pass target=region2.v2.argotunnel.com
+2026-07-19T12:46:40Z INF precheck component="Cloudflare API" details="API is reachable" run_id=9a4acf5d-5c5d-44a0-a2c8-ee87305d83c1 status=pass target=api.cloudflare.com:443
+2026-07-19T12:46:40Z INF precheck complete hard_fail=false run_id=9a4acf5d-5c5d-44a0-a2c8-ee87305d83c1 suggested_protocol=quic
+2026-07-19T12:47:40Z ERR  error="stream 1 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:8000
+2026-07-19T12:47:40Z ERR Request failed error="stream 1 canceled by remote with error code 0" connIndex=0 dest=https://admission-locally-trademark-fabulous.trycloudflare.com/stream event=0 ip=198.41.192.67 type=http
+2026-07-19T12:48:01Z ERR  error="stream 5 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:8000
+2026-07-19T12:48:01Z ERR Request failed error="stream 5 canceled by remote with error code 0" connIndex=0 dest=https://admission-locally-trademark-fabulous.trycloudflare.com/stream event=0 ip=198.41.192.67 type=http
+2026-07-19T12:48:02Z ERR  error="stream 9 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:8000
+2026-07-19T12:48:02Z ERR Request failed error="stream 9 canceled by remote with error code 0" connIndex=0 dest=https://admission-locally-trademark-fabulous.trycloudflare.com/stream event=0 ip=198.41.192.67 type=http
+2026-07-19T12:48:42Z ERR  error="stream 13 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:8000
+2026-07-19T12:48:42Z ERR Request failed error="stream 13 canceled by remote with error code 0" connIndex=0 dest=https://admission-locally-trademark-fabulous.trycloudflare.com/stream event=0 ip=198.41.192.67 type=http
+2026-07-19T12:48:43Z ERR  error="stream 17 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:8000
+2026-07-19T12:48:43Z ERR Request failed error="stream 17 canceled by remote with error code 0" connIndex=0 dest=https://admission-locally-trademark-fabulous.trycloudflare.com/stream event=0 ip=198.41.192.67 type=http
+2026-07-19T12:49:51Z ERR  error="stream 21 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:8000
+2026-07-19T12:49:51Z ERR Request failed error="stream 21 canceled by remote with error code 0" connIndex=0 dest=https://admission-locally-trademark-fabulous.trycloudflare.com/stream event=0 ip=198.41.192.67 type=http
+2026-07-19T12:49:52Z ERR  error="stream 25 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:8000
+2026-07-19T12:49:52Z ERR Request failed error="stream 25 canceled by remote with error code 0" connIndex=0 dest=https://admission-locally-trademark-fabulous.trycloudflare.com/stream event=0 ip=198.41.192.67 type=http
+2026-07-19T12:49:53Z INF Initiating graceful shutdown due to signal interrupt ...
+2026-07-19T12:49:53Z INF Unregistered tunnel connection connIndex=0 event=0 ip=198.41.192.67
