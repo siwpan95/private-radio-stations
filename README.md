@@ -101,11 +101,11 @@ node src/index.js
 
 ## 🧩 浏览器扩展（Edge / Chrome）
 
-`extension/` 是 Manifest V3 扩展，弹窗里看转播状态 + 一键转播 / 停止 / 收藏：
+`extension/` 是 Manifest V3 扩展（v3.0.0，对齐 3.0 API），弹窗里看转播状态 + 一键转播 / 停止 / 收藏（支持多源 failover）+ ♪ 徽标：
 - **Edge**：`edge://extensions` → 开发人员模式 → 加载解压缩的扩展 → 选 `extension/`
 - **Chrome**：`chrome://extensions` → 开发者模式 → 加载已解压的扩展程序 → 选 `extension/`
 
-加载后点 ⚙ 填服务器地址（默认 `http://localhost:8000`）。
+加载后点 ⚙ 填服务器地址（默认 `http://localhost:8000`，保存时自动探测服务器在线版本）。
 
 ---
 
@@ -147,7 +147,7 @@ private-radio-stations-2.0/
   legacy-python/     Python 旧版（已归档，仅供对照）
 ```
 
-> `music/`、`recordings/`、`jingle.mp3`、`integrations.json` 等为旧版本残留，转播版不再使用，可忽略或删除（`jingle.mp3` 仅作本地测试音源保留）。
+> `music/`、`recordings/`、`integrations.json` 等为旧版本残留，可忽略或删除；`jingle.mp3` 现在用于空闲态 /stream 的台标音循环，请保留。
 
 ---
 

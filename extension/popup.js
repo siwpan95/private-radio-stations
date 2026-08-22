@@ -19,10 +19,12 @@ async function api(path, opts) {
 }
 
 // ---------- 状态 ----------
+// 3.0 API：/api/status 返回 { version, mode, current:{url,name}, sourceCount, failureCount, hls_url, hls_variants, mounts, ffmpeg }
 async function refresh() {
   let s;
   try {
     const r = await api("/api/status");
+    if (!r.ok) throw new Error("HTTP " + r.status);
     s = await r.json();
   } catch (e) {
     setError("无法连接电台，请检查服务器是否启动 / 选项页地址");
@@ -31,23 +33,38 @@ async function refresh() {
   clearError();
   _status = s;
 
+  const cur = s.current || null;
   $("mode").textContent = s.mode === "relay" ? "转播中" : "空闲";
-  $("title").textContent = s.current_title || "—";
-  $("sub").textContent =
-    s.mode === "relay" ? "来源：" + (s.relay_url || "—") : "未转播";
-  $("listeners").textContent = "听众 " + (s.listeners || 0);
+  $("title").textContent = cur ? (cur.name || cur.url) : "—";
+  $("sub").textContent = cur ? "来源：" + cur.url : "未转播，可输入流地址开始";
+  const info = [];
+  if (s.sourceCount) info.push("源 " + s.sourceCount + (s.failureCount ? " · 失败 " + s.failureCount : ""));
+  if (s.ffmpeg === false) info.push("无 ffmpeg");
+  $("info").textContent = info.join(" · ") || "—";
 }
 
 async function startRelay() {
-  const url = ($("relayUrl").value || "").trim();
-  if (!url) return;
+  const raw = ($("relayUrl").value || "").trim();
+  if (!raw) return;
+  // 3.0 多源 failover：逗号或换行分隔，第一个为主源，其余为备用源
+  const urls = raw.split(/[\n,]/).map((s) => s.trim()).filter(Boolean);
+  const url = urls[0];
+  const fallbacks = urls.slice(1);
   try {
-    await api("/api/relay", {
+    const r = await api("/api/relay", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify(fallbacks.length ? { url, fallbacks } : { url }),
     });
-  } catch (e) {}
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      setError("转播失败：" + (j.error || r.status));
+      return;
+    }
+  } catch (e) {
+    setError("转播请求失败：" + e);
+    return;
+  }
   refresh();
 }
 
@@ -59,15 +76,19 @@ async function stopRelay() {
 }
 
 async function favCurrent() {
-  if (!_status || _status.mode !== "relay" || !_status.relay_url) return;
+  const cur = _status && _status.current;
+  if (!cur || _status.mode !== "relay") return;
   try {
-    await api("/api/presets", {
+    const r = await api("/api/presets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: _status.relay_url, name: _status.current_title || _status.relay_url }),
+      body: JSON.stringify({ url: cur.url, name: cur.name || cur.url }),
     });
+    if (!r.ok) throw new Error("HTTP " + r.status);
     $("status").textContent = "已收藏到预设 ✓";
-  } catch (e) {}
+  } catch (e) {
+    setError("收藏失败：" + e);
+  }
 }
 
 // ---------- 错误提示 ----------
@@ -76,7 +97,9 @@ function setError(msg) {
   $("status").style.color = "#ff8ab0";
 }
 function clearError() {
-  $("status").textContent = "本地电台 · " + (location.origin || "localhost:8000");
+  $("status").textContent =
+    "本地电台 · " + (location.origin || "localhost:8000") +
+    (_status && _status.version ? " · v" + _status.version : "");
   $("status").style.color = "";
 }
 

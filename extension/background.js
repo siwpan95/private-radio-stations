@@ -14,7 +14,7 @@ async function updateBadge() {
     const base = await getBase();
     const r = await fetch(base + "/api/status");
     const s = await r.json();
-    if (s && s.mode === "relay" && s.current_title) {
+    if (s && s.mode === "relay" && s.current) {
       chrome.action.setBadgeText({ text: "♪" });
       chrome.action.setBadgeBackgroundColor({ color: "#9b5cff" });
     } else {

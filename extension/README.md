@@ -1,17 +1,16 @@
-# 🎧 Radio Browser Extension（Edge / Chrome 通用）
+# 🎧 转播电台浏览器扩展（Edge / Chrome 通用）
 
-一个 **Manifest V3** 浏览器扩展，把你的 Python 电台控制面板装进浏览器工具栏。
-同一套代码 **Edge 与 Chrome 通吃**（二者都是 Chromium 内核，MV3 完全一致），
-无需分别打包、无需构建步骤（纯原生 JS）。
+一个 **Manifest V3** 浏览器扩展，把转播电台（Node.js + Cordis **3.0 版**）的控制装进浏览器工具栏。
+同一套代码 **Edge 与 Chrome 通吃**（都是 Chromium 内核，MV3 完全一致），无需构建步骤（纯原生 JS）。
 
-## ✨ 功能
+## ✨ 功能（对齐 3.0 API）
 
-- **正在播放**：封面、标题、歌手、专辑（来自 `/api/meta` + `/api/cover`）
-- **🎤 歌词**：同步高亮滚动（本地 LRC 优先，缺失时走 LRCLIB 在线，零密钥）
-- **🎛️ 控制**：播放 / 暂停 / 下一首（调 `/api/next` 等）
-- **🔗 社群同步**：一键把当前曲发布到 Discord webhook / Telegram 频道
-- **⚙️ 选项页**：配置服务器地址 + Discord/Telegram 凭据，存 `chrome.storage` 并同步到后端 `/api/integrations`
-- **🎨 玻璃拟态 + 合成波** 风格，与控制面板视觉一致
+- **转播状态**：空闲 / 转播中 + 当前源名称与 URL（`/api/status` 的 `mode` / `current`）
+- **一键转播 / 停止**：`POST /api/relay`（支持**多源 failover**：输入框逗号或换行分隔，第一个为主源，其余为 `fallbacks`）
+- **★ 收藏到预设**：把当前源写入后端 `presets.json`（`POST /api/presets`）
+- **健康信息**：源数量 / 失败次数 / 是否缺 ffmpeg；状态栏显示后端版本（`version` 字段）
+- **图标徽标**：转播中显示 ♪ 徽章（service worker 每 5 秒轮询）
+- **⚙️ 选项页**：配置服务器地址（保存后自动探测 `/api/status` 并显示在线版本）
 
 ## 📦 目录结构
 
@@ -19,12 +18,12 @@
 extension/
   manifest.json     MV3 清单（host_permissions / popup / options / service_worker）
   popup.html        工具栏弹窗 UI
-  popup.css         玻璃拟态 + 合成波样式
-  popup.js          状态轮询 / 歌词同步 / 控制 / 发布
+  popup.css         玻璃拟态样式
+  popup.js          状态轮询 / 转播 / 停止 / 收藏（每 2 秒刷新）
   options.html      配置页
   options.css
-  options.js        凭据读写 + 同步后端
-  background.js     service worker（badge 集成）
+  options.js        服务器地址读写 + 保存后连通性探测
+  background.js     service worker（badge 集成，每 5 秒刷新）
   icons/
     icon-192.png
     icon-512.png
@@ -37,16 +36,16 @@ extension/
 1. 打开 `edge://extensions/`
 2. 右上角打开 **开发人员模式 / Developer mode**
 3. 点 **加载解压缩的扩展 / Load unpacked**
-4. 选择 `G:\radio\extension\` 目录（含 `manifest.json` 的那一层）
+4. 选择 `D:\private-radio-stations-2.0\extension\` 目录（含 `manifest.json` 的那一层）
 5. 工具栏出现电台图标 → 点开即可用
-6. 右键图标 → **选项 / Options** 配置服务器地址与凭据
+6. 右键图标 → **选项 / Options** 配置服务器地址
 
 ### Chrome
 
 1. 打开 `chrome://extensions/`
 2. 右上角打开 **开发者模式 / Developer mode**
 3. 点 **加载已解压的扩展程序 / Load unpacked**
-4. 选择 `G:\radio\extension\` 目录
+4. 选择 `D:\private-radio-stations-2.0\extension\` 目录
 5. 工具栏点扩展图标（如未固定，点拼图图标 🧩 固定到工具栏）
 6. 右键图标 → **选项 / Options** 配置
 
@@ -57,25 +56,16 @@ extension/
 
 | 字段 | 默认 | 说明 |
 |------|------|------|
-| 服务器地址 | `http://localhost:8000` | 电台后端地址；公网穿透后改成公网 URL |
-| 启用社群同步 | 开 | 关闭后 announce 不发任何平台 |
-| Discord Webhook | 空 | `https://discord.com/api/webhooks/...` |
-| Telegram Bot Token | 空 | `123456:ABC-DEF...` |
-| Telegram Chat ID | 空 | 频道/群组数字 ID |
+| 服务器地址 | `http://localhost:8000` | 电台后端地址；公网穿透后改成公网 URL（ngrok/cloudflared 的 https 地址亦可） |
 
-保存后自动 `POST /api/integrations` 写入后端 `integrations.json`，弹出面板与控制面板共享同一配置。
-**凭据只存在后端 `integrations.json`，GET 接口只返回布尔启用状态，不泄露密钥。**
+保存后自动探测一次 `/api/status`，成功会显示「服务器在线 v3.0.0」。
 
 ## 🔐 权限说明
 
 `manifest.json` 声明的 `host_permissions`：
 
-- `http://localhost:8000/*` — 访问本地电台 API
-- `https://lrclib.net/*` — 在线歌词查询（零密钥）
-- `https://api.telegram.org/*` — Telegram Bot 发布（可选）
-- `https://discord.com/api/webhooks/*` — Discord webhook 发布（可选）
-
-权限按需最小化，不请求 `tabs` / `history` / `cookies` 等敏感权限。
+- `http://*/*` 与 `https://*/*` — 允许连接任意自建电台地址（本机 / 局域网 IP / 公网穿透域名）
+- 只申请 `storage`（保存服务器地址），不请求 `tabs` / `history` / `cookies` 等敏感权限
 
 ## 🧪 验证
 
@@ -86,10 +76,9 @@ node --check popup.js options.js background.js
 node -e "JSON.parse(require('fs').readFileSync('manifest.json','utf8'))"
 ```
 
-加载后打开弹窗，应显示「正在播放」状态；点 ⚙️ 进入选项页填好服务器地址即可联动。
+加载后打开弹窗：显示「空闲」与版本号即连通；输入流地址点 ▶ 转播，标题切换为源名称、徽标变 ♪。
 
 ## 🛠️ 开发提示
 
 - 改完代码到 `edge://extensions` 或 `chrome://extensions` 点扩展卡片上的 **刷新 ↻** 即可重载，无需重打包。
-- `popup.js` 每 2 秒轮询 `/api/status`；歌词按 `elapsed` 同步高亮当前行并滚动居中。
-- 后端需开启 CORS（`web.py` 的 `@app.after_request` 已对 `/api/*` 开放 `Access-Control-Allow-Origin: *`），扩展 popup 才能跨域 fetch。
+- `popup.js` 每 2 秒轮询 `/api/status`；后端 `web.js` 已对全部响应开放 CORS（`Access-Control-Allow-Origin: *`），扩展 popup 可跨域 fetch。

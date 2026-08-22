@@ -37,6 +37,19 @@ async function save() {
   } catch (e) {
     msg.className = "err";
     msg.textContent = "保存失败";
+    return;
+  }
+  // 顺手探测一次服务器：3.0 的 /api/status 带 version 字段
+  try {
+    const r = await fetch(serverUrl.replace(/\/+$/, "") + "/api/status", {
+      headers: { Accept: "application/json" },
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const s = await r.json();
+    msg.textContent = "✓ 已保存 · 服务器在线 v" + (s.version || "?");
+  } catch (e) {
+    msg.className = "err";
+    msg.textContent = "已保存，但连接失败（" + e + "）";
   }
 }
 

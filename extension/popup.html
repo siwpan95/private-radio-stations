@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PyRadio Relay</title>
+<title>转播电台</title>
 <link rel="stylesheet" href="popup.css">
 <style>
   .relay { margin-top: 10px; }
@@ -23,7 +23,7 @@
     <header class="topbar">
       <div class="logo">📻</div>
       <div class="brand">
-        <div class="name">PyRadio 转播</div>
+        <div class="name">转播电台</div>
         <div class="sub" id="mode">连接中…</div>
       </div>
       <button class="icon-btn" id="openOptions" title="设置">⚙</button>
@@ -43,8 +43,8 @@
         <button class="ctrl" id="stopRelay">■ 停止</button>
         <button class="ctrl" id="fav" title="收藏到预设">★</button>
       </div>
-      <div class="listeners" id="listeners">听众 0</div>
-      <div class="hint">转播任意 http(s) 音频流（MP3/AAC 最佳）。收藏会写入 presets.json。</div>
+      <div class="listeners" id="info">—</div>
+      <div class="hint">转播任意 http(s) 音频流（MP3/AAC 最佳）。支持多源 failover：逗号或换行分隔，主源失败自动切备用源。收藏会写入 presets.json。</div>
     </section>
 
     <div class="status" id="status">本地电台 · localhost:8000</div>
