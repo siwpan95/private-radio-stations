@@ -23,6 +23,9 @@
 - 🎚️ **多码率挂载点**：额外 `/stream/64`、`/stream/320`（ffmpeg 实时转码，手机省流量 / WiFi 高音质）
 - 🏷️ **ICY 元数据**：播放器（VLC/Winamp 等）请求带 `Icy-MetaData: 1` 时，主串流每 8192 字节插入「正在转播」标题
 - 🔔 **空闲台标音**：未转播时打开 `/stream` 循环播放 `jingle.mp3`（代替 409 报错）
+- 🛡️ **配置校验**：启动即校验 `cordis.yml`（类型/范围，错误带字段路径），拼错当场报错退出
+- 📝 **文件日志**：`data/logs/radio.log` 自动截断；未捕获异常也落盘；面板/状态接口显示最近错误
+- 🩺 **运行健康**：`/api/status` 输出 uptime / ffmpeg 子进程数 / HLS 最新分片年龄 / 错误环，面板「状态」区实时显示
 - 🔴 **公网收听**：`start-radio.bat` 可一键拉起（含本地 npm 镜像代理），面板显示分享地址
 
 ---
@@ -71,6 +74,19 @@ node src/index.js
 
 > 一键部署（Windows）：`python gen_start_bat.py` 生成 `start-radio.bat`，双击即拉起镜像代理 + 安装依赖 + 启动服务。
 
+## 🧰 开发命令
+
+```bash
+npm test            # node:test 单测（station / presets）
+npm run check       # 质量门禁（语法/manifest/yml/单测；git hooks 自动跑）
+npm run smoke       # 端到端冒烟（起服务 → 12 项断言）
+npm run dev:web     # Vite 开发服务器 http://localhost:5173（/api 代理到 8000，热更新）
+npm run build:web   # 构建面板到 public/（postinstall 自动执行）
+```
+
+> git hooks：`npm install` 后自动安装 pre-commit（快速门禁）与 pre-push（全量门禁含冒烟），
+> 详见 `scripts/install-hooks.mjs`；排障与部署回查 `DEPLOY.md`。
+
 ---
 
 ## 🔌 API 一览
@@ -81,7 +97,7 @@ node src/index.js
 | GET  | `/stream`        | 主音频流（默认 128k；空闲循环台标音；带 `Icy-MetaData: 1` 时插入标题元数据）|
 | GET  | `/stream/<k>`    | 多码率挂载点，`k` ∈ {64, 320}（ffmpeg 转码）|
 | GET  | `/hls/<file>`    | HLS 分片（`live.m3u8` master + `v_128k/v_64k.m3u8` 变体 + `*.ts`，仅转播中有效，空闲 404）|
-| GET  | `/api/status`    | 当前状态 JSON（含 `version` / `hls_variants` / `ffmpeg`） |
+| GET  | `/api/status`    | 当前状态 JSON（`version`/`mode`/`current` + 健康：`uptime`/`ffmpeg_children`/`hls`/`logfile`/`recent_errors`） |
 | POST | `/api/relay`     | 开始转播 `{"url","name?","fallbacks?":[...]}` |
 | POST | `/api/relay/stop`| 停止转播 |
 | GET  | `/api/browse`    | 搜索全球电台 `?q=关键词&limit=20` |
@@ -124,26 +140,36 @@ node src/index.js
 ```
 private-radio-stations-2.0/
   src/
-    index.js         启动入口（new Context → loader → 监听 SIGINT/SIGTERM）
+    index.js         启动入口（new Context → loader → SIGINT/SIGTERM + 未捕获异常落盘）
     loader.js        读取 cordis.yml 驱动插件加载 + ready 事件
     plugins/
-      config.js      全局配置（端口 / ffmpeg / HLS / 多码率）
+      config.js      全局配置 + cordis.yml 启动校验（schema 带字段路径报错）
+      logfile.js     文件日志（data/logs/radio.log 截断）+ 错误环
       station.js     转播状态机 + 多源 failover
       streamer.js    流生成（ffmpeg 多码率转码 + fetch 回退 + 播放列表解析）
-      hls.js         HLS 切片管理（ffmpeg 随转播启停）
+      hls.js         HLS 双码率切片管理（ffmpeg 随转播启停 + 段龄健康）
       browse.js      Radio-Browser.info 搜索
       presets.js     presets.json 读写
-      web.js         Node http 路由：控制面板 + 流媒体接口 + API
-  cordis.yml         插件注册表 & 配置（yml 驱动）
-  public/index.html  转播控制面板 UI（单文件）
+      web.js         Node http 路由：控制面板 + 流媒体接口 + API + ICY
+  cordis.yml         插件注册表 & 配置（yml 驱动，启动校验）
+  web-src/           面板源码（Vite）：index.html + main.js + style.css
+  public/            面板构建产物（npm run build:web，postinstall 自动构建，入库）
+  vite.config.mjs    Vite 配置（dev 代理 /api /stream /hls 到 8000）
+  scripts/
+    check.mjs        质量门禁（语法/manifest/yml/空白/单测/冒烟）
+    install-hooks.mjs 安装 git hooks（pre-commit / pre-push，postinstall 自动）
+    smoke.mjs        端到端冒烟（起服务 → curl 断言 12 项）
+  test/              node:test 单测（station / presets）
   presets.json       精选电台预设（可编辑）
   ffmpeg/            ffmpeg 二进制（自选放，gitignore）
   hls/               HLS 切片产物（运行时生成，gitignore）
-  extension/         MV3 浏览器扩展
-  npm_local_mirror.py 本地 npm 镜像代理（修复本机 undici EIDLETIMEOUT）
+  data/logs/         运行日志（gitignore）
+  extension/         MV3 浏览器扩展（v3.0.0）
+  DEPLOY.md          部署说明与故障记录（按编号回查）
+  vendor/README.md   第三方源码归档规范（vendor/cordis 不入库）
+  npm_local_mirror.py 本地 npm 镜像代理（修复本机 undici EIDLETIMEOUT，端口 8899）
   gen_start_bat.py   生成 start-radio.bat
   start-radio.bat    一键部署脚本（CRLF/ASCII）
-  vendor/cordis/     cordis-main.zip 解压的 Cordis 源码（归档参考，运行期不依赖）
   legacy-python/     Python 旧版（已归档，仅供对照）
 ```
 
