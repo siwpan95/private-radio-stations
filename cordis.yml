@@ -20,7 +20,8 @@ plugins:
       segmentSec: 4
       listSize: 6
       deleteThreshold: 3
-      bitrate: 128
+      # 多码率 ABR：一个 ffmpeg 进程切多档 AAC，live.m3u8 为 master
+      variants: [128, 64]
     ffmpegDir: ffmpeg
     presetsFile: presets.json
 

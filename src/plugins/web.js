@@ -5,9 +5,50 @@ import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { spawn } from 'node:child_process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PUBLIC = path.resolve(__dirname, '..', '..', 'public')
+
+// ---- ICY 元数据（VLC/Winamp 等播放器显示「正在转播」标题）----
+// 客户端带 Icy-MetaData: 1 请求时，每 metaint 字节音频后插入一个元数据块。
+const ICY_METAINT = 8192
+
+function icyMetaBlock(title) {
+  if (!title) return Buffer.from([0])
+  const safe = String(title).replace(/'/g, '’')   // 单引号会破坏 StreamTitle 格式
+  const text = Buffer.from("StreamTitle='" + safe + "';", 'utf8')
+  const len = Math.ceil(text.length / 16) * 16
+  const buf = Buffer.alloc(1 + len)
+  buf[0] = len / 16
+  text.copy(buf, 1)
+  return buf
+}
+
+// 返回一个 push(chunk) 函数：按 metaint 切分音频字节并插入元数据块。
+function icyInjector(res, getTitle, metaint = ICY_METAINT) {
+  let since = 0
+  let last = ''
+  return function push(chunk) {
+    let off = 0
+    while (off < chunk.length) {
+      const take = Math.min(metaint - since, chunk.length - off)
+      if (take > 0) {
+        const ok = res.write(chunk.subarray(off, off + take))
+        off += take
+        since += take
+        if (!ok) return false   // 背压交给调用方处理
+      }
+      if (since >= metaint) {
+        const t = getTitle()
+        res.write(icyMetaBlock(t === last ? '' : t))
+        last = t
+        since = 0
+      }
+    }
+    return true
+  }
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -122,32 +163,53 @@ class WebService extends Service {
 
     if (pathname === '/stream' && req.method === 'GET') {
       if (station.mode !== 'relay') {
-        res.writeHead(409, { 'Content-Type': 'text/plain; charset=utf-8' })
-        return res.end('not relaying')
+        return this.serveIdleStream(req, res)
       }
       const bitrate = config.defaultBitrate || 128
-      res.writeHead(200, {
+      const wantsIcy = String(req.headers['icy-metadata'] || '').trim() === '1'
+      const headers = {
         'Content-Type': 'audio/mpeg',
         'Cache-Control': 'no-cache',
         Connection: 'close',
-      })
+      }
+      if (wantsIcy) {
+        headers['icy-metaint'] = String(ICY_METAINT)
+        headers['icy-name'] = 'Private Radio Relay'
+        headers['icy-genre'] = 'Various'
+        headers['icy-br'] = String(bitrate)
+      }
+      res.writeHead(200, headers)
+      const push = wantsIcy
+        ? icyInjector(res, () => (station.current ? station.current.name : ''))
+        : (b) => { if (!res.writableEnded) res.write(b); return true }
       if (config.ffmpegOk()) {
         const child = await streamer.relayMount(bitrate)
         if (!child) {
           res.end('no source')
           return
         }
-        pipeChild(child)
+        const onData = (c) => {
+          if (res.writableEnded) return
+          const ok = push(c)
+          if (ok === false && child.stdout && !child.killed) {
+            child.stdout.pause()
+            res.once('drain', () => { if (child.stdout && !child.killed) child.stdout.resume() })
+          }
+        }
+        child.stdout.on('data', onData)
+        child.stdout.on('end', () => { if (!res.writableEnded) res.end() })
+        child.on('exit', () => { if (!res.writableEnded) res.end() })
+        req.on('close', () => { try { child.kill('SIGKILL') } catch { /* ignore */ } })
         return
       }
       // No ffmpeg: Node fetch fallback (lower reliability on some sources).
       try {
         for await (const chunk of streamer.fetchStream()) {
           if (res.writableEnded) break
-          res.write(chunk)
+          push(chunk)
         }
       } catch (e) {
-        this.ctx.logger.error(`/stream fallback error: ${e && e.message}`)
+        this.ctx.logger.error('/stream fallback error: ' + (e && e.message))
       }
       return res.end()
     }
@@ -209,6 +271,59 @@ class WebService extends Service {
 
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' })
     res.end('not found')
+  }
+
+  // 空闲态兜底：循环播放 jingle.mp3（台标音），不再 409。
+  // 有 ffmpeg：ffmpeg 循环 + 实时节流；无 ffmpeg：Node 按默认码率循环喂字节；
+  // 连 jingle 都没有则保持连接静音（客户端听到无声）。
+  serveIdleStream(req, res) {
+    const { config, station } = this.ctx
+    const wantsIcy = String(req.headers['icy-metadata'] || '').trim() === '1'
+    const headers = {
+      'Content-Type': 'audio/mpeg',
+      'Cache-Control': 'no-cache',
+      Connection: 'close',
+    }
+    if (wantsIcy) {
+      headers['icy-metaint'] = String(ICY_METAINT)
+      headers['icy-name'] = 'Private Radio Relay'
+      headers['icy-genre'] = 'Idle'
+      headers['icy-br'] = String(config.defaultBitrate || 128)
+    }
+    res.writeHead(200, headers)
+    const title = () => (station.mode === 'relay' && station.current ? station.current.name : '待机中（未转播）')
+    const push = wantsIcy
+      ? icyInjector(res, title)
+      : (b) => { if (!res.writableEnded) res.write(b); return true }
+
+    const jingle = path.resolve(config.root, 'jingle.mp3')
+    if (config.ffmpegOk() && fs.existsSync(jingle)) {
+      const child = spawn(config.ffmpeg,
+        ['-stream_loop', '-1', '-re', '-i', jingle, '-acodec', 'copy', '-f', 'mp3', '-'],
+        { stdio: ['ignore', 'pipe', 'ignore'] })
+      const onData = (c) => { if (!res.writableEnded) push(c) }
+      child.stdout.on('data', onData)
+      child.on('exit', () => { if (!res.writableEnded) res.end() })
+      req.on('close', () => { try { child.kill('SIGKILL') } catch { /* ignore */ } })
+      return
+    }
+    if (fs.existsSync(jingle)) {
+      // 无 ffmpeg：按默认码率循环喂 jingle 字节
+      const data = fs.readFileSync(jingle)
+      const csize = config.chunkSize || 4096
+      const bps = ((config.defaultBitrate || 128) * 1000) / 8
+      let off = 0
+      const timer = setInterval(() => {
+        if (res.writableEnded) { clearInterval(timer); return }
+        const end = Math.min(off + csize, data.length)
+        push(data.subarray(off, end))
+        off = end >= data.length ? 0 : end
+      }, (csize / bps) * 1000)
+      req.on('close', () => clearInterval(timer))
+      return
+    }
+    // 无 jingle 无 ffmpeg：静音保持连接
+    req.on('close', () => { if (!res.writableEnded) res.end() })
   }
 
   serveFile(res, filePath, ext) {

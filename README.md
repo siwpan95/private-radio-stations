@@ -19,8 +19,10 @@
 - 🌍 **浏览全球网络电台**：搜索 Radio-Browser.info 数万真实电台，一键转播；每条带**直链复制**
 - 💿 **实时可视化**：音频驱动的中心旋转唱片 + 放射状频谱（Web Audio `AnalyserNode`）
 - 🎛️ **控制面板**：看「正在转播」+ 切换源 + 收藏，明暗主题
-- 📺 **HLS 切片输出**：转播流同时切成 `hls/live.m3u8` + `.ts`（ffmpeg 实时切片），供网页低延迟播放
+- 📺 **HLS 切片输出（双码率 ABR）**：一个 ffmpeg 进程同时切出 128k/64k 两档 AAC，`hls/live.m3u8` 为 master 播放列表（播放器按网速自适应），供网页/手机低延迟播放
 - 🎚️ **多码率挂载点**：额外 `/stream/64`、`/stream/320`（ffmpeg 实时转码，手机省流量 / WiFi 高音质）
+- 🏷️ **ICY 元数据**：播放器（VLC/Winamp 等）请求带 `Icy-MetaData: 1` 时，主串流每 8192 字节插入「正在转播」标题
+- 🔔 **空闲台标音**：未转播时打开 `/stream` 循环播放 `jingle.mp3`（代替 409 报错）
 - 🔴 **公网收听**：`start-radio.bat` 可一键拉起（含本地 npm 镜像代理），面板显示分享地址
 
 ---
@@ -76,10 +78,10 @@ node src/index.js
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET  | `/`              | 控制面板网页 |
-| GET  | `/stream`        | 主音频流（默认 128k，空闲返回 409）|
+| GET  | `/stream`        | 主音频流（默认 128k；空闲循环台标音；带 `Icy-MetaData: 1` 时插入标题元数据）|
 | GET  | `/stream/<k>`    | 多码率挂载点，`k` ∈ {64, 320}（ffmpeg 转码）|
-| GET  | `/hls/<file>`    | HLS 分片（`live.m3u8` / `*.ts`，仅转播中有效，空闲 404）|
-| GET  | `/api/status`    | 当前状态 JSON |
+| GET  | `/hls/<file>`    | HLS 分片（`live.m3u8` master + `v_128k/v_64k.m3u8` 变体 + `*.ts`，仅转播中有效，空闲 404）|
+| GET  | `/api/status`    | 当前状态 JSON（含 `version` / `hls_variants` / `ffmpeg`） |
 | POST | `/api/relay`     | 开始转播 `{"url","name?","fallbacks?":[...]}` |
 | POST | `/api/relay/stop`| 停止转播 |
 | GET  | `/api/browse`    | 搜索全球电台 `?q=关键词&limit=20` |

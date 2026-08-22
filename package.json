@@ -1,6 +1,6 @@
 {
   "name": "private-radio-stations",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "description": "Relay-only internet radio station (Node.js + Cordis). Proxies remote audio streams with ffmpeg transcode, multi-bitrate mounts, HLS output, global station browse, and a control panel.",

@@ -13,7 +13,7 @@ class BrowseService extends Service {
     if (!q) return []
     const url = `${ENDPOINT}?name=${q}&limit=${limit}&hidebroken=true&order=votes&reverse=true`
     try {
-      const resp = await fetch(url, { headers: { 'User-Agent': 'private-radio/2.1' } })
+      const resp = await fetch(url, { headers: { 'User-Agent': 'private-radio/3.0' } })
       if (!resp.ok) return []
       const data = await resp.json()
       return (data || []).slice(0, limit).map((s) => ({

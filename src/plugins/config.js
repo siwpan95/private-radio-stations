@@ -52,13 +52,24 @@ export default function configPlugin(ctx, config = {}) {
     ? config.transcodeMounts.slice()
     : [64, 320]
   const hls = Object.assign(
-    { enabled: true, dir: 'hls', segmentSec: 4, listSize: 6, deleteThreshold: 3, bitrate: 128 },
+    { enabled: true, dir: 'hls', segmentSec: 4, listSize: 6, deleteThreshold: 3, variants: [128, 64] },
     config.hls || {}
   )
+  if (!Array.isArray(hls.variants) || !hls.variants.length) {
+    hls.variants = [Number(hls.bitrate) || 128]
+  }
   const ffmpegDir = config.ffmpegDir || 'ffmpeg'
   const presetsFile = path.resolve(ROOT, config.presetsFile || 'presets.json')
 
   const ffmpeg = detectFfmpeg(ROOT, ffmpegDir)
+
+  // 应用版本号（package.json），供 /api/status 输出
+  let version = 'unknown'
+  try {
+    version = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version
+  } catch {
+    /* ignore */
+  }
 
   const cfg = {
     port,
@@ -70,6 +81,7 @@ export default function configPlugin(ctx, config = {}) {
     ffmpegDir,
     presetsFile,
     root: ROOT,
+    version,
     ffmpegSourceDirs: FFMPEG_SOURCE_DIRS,
     ffmpeg,
     ffmpegOk() {

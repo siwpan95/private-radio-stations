@@ -59,11 +59,13 @@ class StationService extends Service {
   status() {
     const cfg = this.ctx.config || {}
     return {
+      version: cfg.version || 'unknown',
       mode: this.mode,
       current: this.current,
       sourceCount: this.sources.length,
       failureCount: this.failureCount,
       hls_url: cfg.hls && cfg.hls.enabled ? '/hls/live.m3u8' : null,
+      hls_variants: (cfg.hls && cfg.hls.variants) || [],
       mounts: cfg.transcodeMounts || [],
       ffmpeg: cfg.ffmpegOk ? cfg.ffmpegOk() : false,
     }

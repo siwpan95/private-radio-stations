@@ -24,9 +24,8 @@ ffmpeg/
 public_url.txt
 # cloudflared / ngrok 日志
 *.log
-# HLS 切片产物（live.m3u8 由 ffmpeg 生成，亦忽略）
-hls/*.ts
-hls/live.m3u8
+# HLS 切片产物（全部运行时生成：master/变体播放列表/分片）
+hls/
 # Python 缓存
 __pycache__/
 *.pyc

@@ -34,28 +34,38 @@ class HlsService extends Service {
     if (!url || !this.ffmpegOk()) return
     this.stop()
     const ff = this.ctx.config.ffmpeg
-    const { segmentSec, listSize, bitrate } = this.ctx.config.hls
+    const { segmentSec, listSize, variants } = this.ctx.config.hls
     resolveSource(url)
-      .then((resolved) => this._spawn(ff, resolved, { segmentSec, listSize, bitrate }))
-      .catch((e) => this.ctx.logger.warn(`hls resolve failed: ${e && e.message}`))
+      .then((resolved) => this._spawn(ff, resolved, { segmentSec, listSize, variants }))
+      .catch((e) => this.ctx.logger.warn('hls resolve failed: ' + (e && e.message)))
   }
 
-  _spawn(ff, url, { segmentSec, listSize, bitrate }) {
+  // 多码率 ABR：一个 ffmpeg 进程同时切出多档 AAC（默认 128k/64k），
+  // live.m3u8 是 master 播放列表，指向 v_<k>.m3u8 变体列表。
+  _spawn(ff, url, { segmentSec, listSize, variants }) {
     if (!url) return
+    const vs = Array.isArray(variants) && variants.length ? variants : [128]
+    const bitrateArgs = []
+    vs.forEach((br, i) => bitrateArgs.push('-b:a:' + i, br + 'k'))
+    const vmap = vs.map((br, i) => 'a:' + i + ',agroup:aud,name:' + br + 'k').join(' ')
     const args = [
       ...(needsReconnect(url) ? RECONNECT_ARGS : []),
       '-i', url,
+      ...vs.flatMap(() => ['-map', '0:a']),
       '-c:a', 'aac',
-      '-b:a', `${bitrate}k`,
+      ...bitrateArgs,
       '-f', 'hls',
       '-hls_time', String(segmentSec),
       '-hls_list_size', String(listSize),
       '-hls_flags', 'delete_segments+append_list',
-      path.join(this.hlsDir, 'live.m3u8'),
+      '-master_pl_name', 'live.m3u8',
+      '-var_stream_map', vmap,
+      '-hls_segment_filename', path.join(this.hlsDir, 'seg_%v_%03d.ts'),
+      path.join(this.hlsDir, 'v_%v.m3u8'),
     ]
     this.child = spawn(ff, args, { stdio: ['ignore', 'ignore', 'ignore'] })
     this.child.on('exit', () => { if (this.child && this.child.exitCode !== null) this.child = null })
-    this.ctx.logger.info(`hls start (${url}) -> ${this.hlsDir}/live.m3u8`)
+    this.ctx.logger.info('hls start (' + url + ') -> ' + this.hlsDir + '/live.m3u8 (' + vs.map((b) => b + 'k').join('/') + ')')
   }
 
   stop() {
@@ -67,7 +77,7 @@ class HlsService extends Service {
     try {
       const dir = this.hlsDir
       for (const f of fs.readdirSync(dir)) {
-        if (f.endsWith('.ts') || f === 'live.m3u8') {
+        if (f.endsWith('.ts') || f === 'live.m3u8' || (f.startsWith('v_') && f.endsWith('.m3u8'))) {
           fs.rmSync(path.join(dir, f), { force: true })
         }
       }
