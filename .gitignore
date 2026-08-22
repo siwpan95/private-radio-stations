@@ -1,0 +1,66 @@
+# Build and Release Folders
+bin-debug/
+bin-release/
+[Oo]bj/
+[Bb]in/
+
+# Other files and folders
+.settings/
+
+# Executables
+*.swf
+*.air
+*.ipa
+*.apk
+
+# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties
+# should NOT be excluded as they contain compiler settings and other important
+# information for Eclipse / Flash Builder.
+
+# ---------- 本项目的运行期 / 体积产物 ----------
+# ffmpeg 二进制自带，自行下载放入，不进版本库
+ffmpeg/
+# expose 写回的公网地址
+public_url.txt
+# cloudflared / ngrok 日志
+*.log
+# HLS 切片产物（live.m3u8 由 ffmpeg 生成，亦忽略）
+hls/*.ts
+hls/live.m3u8
+# Python 缓存
+__pycache__/
+*.pyc
+
+# ---------- Node.js 部署 ----------
+# npm 依赖（经镜像代理安装）
+node_modules/
+# 运行期数据目录
+data/
+# Cordis 框架源码归档（来自 cordis-main.zip，运行期走 npm cordis）
+vendor/cordis/
+# 工具链验证临时目录
+.tooltest/
+# 旧 Python 版（已用 Node.js 替换），不进版本库
+legacy-python/
+
+# ---------- 归档 / 无关内容（保留本地，不进版本库） ----------
+# 参考 Cordis 源码压缩包
+cordis-main.zip
+# 参考项目压缩包
+paper-main.zip
+# 临时注入测试脚本
+.inject_test.mjs
+# 旧 master 分支解压副本（重复内容）
+private-radio-stations-master/
+# 旧 Python 版穿透脚本
+expose.sh
+# 旧版残留
+integrations.json
+# 本地测试音源（旧版残留）
+jingle.mp3
+# 旧版残留
+music/
+# 旧版残留
+recordings/
+# 临时解压目录
+.cordis_extract/

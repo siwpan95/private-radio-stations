@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "PyRadio Relay",
+  "version": "1.0.0",
+  "description": "纯 Python 转播电台的浏览器伴侣：弹窗看转播状态 + 一键转播 / 停止 / 收藏，Edge 与 Chrome 共用（Chromium MV3）。",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PyRadio 转播"
+  },
+  "options_page": "options.html",
+  "icons": {
+    "192": "icons/icon-192.png",
+    "512": "icons/icon-512.png"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

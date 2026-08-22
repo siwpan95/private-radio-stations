@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PyRadio Relay · 转播控制台</title>
+<style>
+  :root { --bg:#0e1116; --panel:#171b22; --panel2:#1f2530; --fg:#e6e9ef; --muted:#8b93a3;
+          --accent:#4f9dff; --red:#ff5a5a; --green:#39d98a; --brd:#2a313d; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+         background:var(--bg); color:var(--fg); }
+  header { padding:14px 18px; border-bottom:1px solid var(--brd); display:flex;
+           align-items:center; gap:10px; }
+  header h1 { font-size:18px; margin:0; }
+  header .tag { font-size:11px; color:var(--muted); border:1px solid var(--brd);
+               padding:2px 6px; border-radius:4px; }
+  main { max-width:960px; margin:0 auto; padding:18px; display:grid; gap:16px; }
+  .panel { background:var(--panel); border:1px solid var(--brd); border-radius:10px; padding:16px; }
+  .panel h2 { margin:0 0 12px; font-size:14px; color:var(--muted); text-transform:uppercase;
+              letter-spacing:.06em; }
+  label { display:block; font-size:12px; color:var(--muted); margin:8px 0 4px; }
+  input, textarea { width:100%; background:var(--panel2); border:1px solid var(--brd);
+                    color:var(--fg); border-radius:7px; padding:9px 10px; font-size:14px; }
+  textarea { resize:vertical; min-height:56px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; }
+  .row > * { flex:1; min-width:160px; }
+  button { cursor:pointer; border:none; border-radius:7px; padding:9px 14px; font-size:14px;
+           font-weight:600; color:#fff; background:var(--accent); }
+  button.ghost { background:var(--panel2); border:1px solid var(--brd); color:var(--fg); }
+  button.danger { background:var(--red); }
+  button:disabled { opacity:.5; cursor:default; }
+  .status-pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px;
+                 font-weight:700; }
+  .pill-idle { background:#3a2a2a; color:var(--red); }
+  .pill-relay { background:#1f3a2a; color:var(--green); }
+  .now { font-size:13px; color:var(--muted); margin-top:8px; word-break:break-all; }
+  .mounts { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .mount { background:var(--panel2); border:1px solid var(--brd); border-radius:7px;
+           padding:6px 12px; cursor:pointer; font-weight:600; }
+  .mount.active { outline:2px solid var(--accent); }
+  .list { list-style:none; margin:0; padding:0; max-height:280px; overflow:auto; }
+  .list li { padding:10px; border:1px solid var(--brd); border-radius:8px; margin-bottom:8px;
+             background:var(--panel2); display:flex; justify-content:space-between; gap:10px;
+             align-items:center; }
+  .list li .meta { color:var(--muted); font-size:12px; }
+  .list li .name { font-weight:600; }
+  .actions { display:flex; gap:6px; }
+  .actions button { padding:5px 10px; font-size:12px; }
+  .player { margin-top:12px; }
+  audio { width:100%; }
+  canvas { width:100%; height:54px; background:var(--panel2); border-radius:8px;
+           border:1px solid var(--brd); margin-top:10px; display:block; }
+  .hint { color:var(--muted); font-size:12px; }
+  a.link { color:var(--accent); }
+  .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+           background:#0b0e13; border:1px solid var(--brd); padding:10px 16px; border-radius:8px;
+           opacity:0; transition:opacity .25s; pointer-events:none; }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📻 PyRadio Relay</h1>
+  <span class="tag">仅转播 · Node.js + Cordis</span>
+  <span id="ffmpegState" class="tag"></span>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>状态</h2>
+    <div><span id="modePill" class="status-pill pill-idle">IDLE</span></div>
+    <div class="now" id="nowPlaying">空闲中 — 未转播</div>
+    <div class="mounts" id="mounts"></div>
+  </section>
+
+  <section class="panel">
+    <h2>转播控制</h2>
+    <label>音频流地址 (http(s) 任意音频流)</label>
+    <input id="relayUrl" placeholder="https://example.com/stream.mp3" />
+    <label>名称（可选）</label>
+    <input id="relayName" placeholder="我的电台" />
+    <label>备用源（每行一个，主源断线自动切换）</label>
+    <textarea id="relayFallback" placeholder="https://backup1.example/stream.mp3&#10;https://backup2.example/stream.mp3"></textarea>
+    <div class="row" style="margin-top:12px;">
+      <button id="startBtn">▶ 开始转播</button>
+      <button id="stopBtn" class="danger" disabled>■ 停止</button>
+    </div>
+    <div class="player">
+      <label>主播放器（原始流 /stream）</label>
+      <audio id="mainAudio" controls preload="none"></audio>
+      <canvas id="viz"></canvas>
+    </div>
+    <div class="player" id="hlsPlayerWrap" style="display:none;">
+      <label>HLS 播放器（/hls/live.m3u8）</label>
+      <audio id="hlsAudio" controls preload="none"></audio>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>浏览全球电台 (Radio-Browser)</h2>
+    <div class="row">
+      <input id="browseQuery" placeholder="搜索电台名，如 Jazz / Lofi / 北京" />
+      <button id="browseBtn" style="flex:0 0 120px;">搜索</button>
+    </div>
+    <ul class="list" id="browseList" style="margin-top:12px;"></ul>
+  </section>
+
+  <section class="panel">
+    <h2>预设</h2>
+    <div class="row">
+      <input id="presetName" placeholder="预设名称" />
+      <input id="presetUrl" placeholder="流地址" />
+      <button id="presetAdd" style="flex:0 0 90px;">添加</button>
+    </div>
+    <ul class="list" id="presetList" style="margin-top:12px;"></ul>
+  </section>
+
+  <section class="panel">
+    <h2>分享</h2>
+    <p class="hint">复制本机地址发给同局域网设备，或配合隧道工具（expose.sh）生成公网地址。</p>
+    <div class="row">
+      <input id="shareUrl" readonly />
+      <button id="copyBtn" class="ghost" style="flex:0 0 90px;">复制</button>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id)
+let currentMount = null
+
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show')
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1800)
+}
+async function api(path, opts) {
+  const r = await fetch(path, opts)
+  if (!r.ok) throw new Error((await r.text()) || r.status)
+  return r.json()
+}
+
+async function refresh() {
+  try {
+    const s = await api('/api/status')
+    const pill = $('modePill')
+    pill.textContent = s.mode === 'relay' ? 'RELAY' : 'IDLE'
+    pill.className = 'status-pill ' + (s.mode === 'relay' ? 'pill-relay' : 'pill-idle')
+    $('nowPlaying').textContent = s.mode === 'relay' && s.current
+      ? `正在转播：${s.current.name}  (${s.current.url})` : '空闲中 — 未转播'
+    $('ffmpegState').textContent = s.ffmpeg ? 'ffmpeg ✓' : 'ffmpeg ✗'
+    $('startBtn').disabled = s.mode === 'relay'
+    $('stopBtn').disabled = s.mode !== 'relay'
+
+    // HLS player visibility
+    $('hlsPlayerWrap').style.display = (s.hls_url && s.mode === 'relay') ? 'block' : 'none'
+    if (s.hls_url && s.mode === 'relay') {
+      const ha = $('hlsAudio')
+      if (ha.dataset.src !== s.hls_url) { ha.src = s.hls_url; ha.dataset.src = s.hls_url }
+    }
+
+    // mounts
+    const m = $('mounts'); m.innerHTML = ''
+    ;(s.mounts || []).forEach((k) => {
+      const el = document.createElement('div')
+      el.className = 'mount' + (currentMount === k ? ' active' : '')
+      el.textContent = k + 'k'
+      el.onclick = () => selectMount(k)
+      m.appendChild(el)
+    })
+    if (!currentMount && s.mode === 'relay') selectMount(null)
+  } catch (e) { toast('状态刷新失败：' + e.message) }
+}
+
+function selectMount(k) {
+  currentMount = k
+  const a = $('mainAudio')
+  if (k) a.src = `/stream/${k}`; else a.src = '/stream'
+  document.querySelectorAll('.mount').forEach((el) => {
+    el.classList.toggle('active', String(k) === el.textContent.replace('k', ''))
+  })
+}
+
+$('startBtn').onclick = async () => {
+  const url = $('relayUrl').value.trim()
+  if (!url) return toast('请填写音频流地址')
+  const fallbacks = $('relayFallback').value.split('\n').map((s) => s.trim()).filter(Boolean)
+  try {
+    await api('/api/relay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, name: $('relayName').value.trim(), fallbacks }),
+    })
+    toast('转播已启动')
+    await refresh()
+  } catch (e) { toast('启动失败：' + e.message) }
+}
+
+$('stopBtn').onclick = async () => {
+  try { await api('/api/relay/stop', { method: 'POST' }); currentMount = null
+    toast('已停止'); await refresh() } catch (e) { toast('停止失败：' + e.message) }
+}
+
+$('browseBtn').onclick = async () => {
+  const q = $('browseQuery').value.trim()
+  if (!q) return toast('请输入搜索词')
+  try {
+    const { results } = await api('/api/browse?q=' + encodeURIComponent(q))
+    const ul = $('browseList'); ul.innerHTML = ''
+    if (!results.length) { ul.innerHTML = '<li class="hint">无结果</li>'; return }
+    results.forEach((r) => {
+      const li = document.createElement('li')
+      li.innerHTML = `<div><div class="name">${esc(r.name)}</div>
+        <div class="meta">${esc(r.country||'')} · ${esc(r.genre||'')} · ${r.bitrate||'?'}kbps · ${esc(r.codec||'')}</div></div>`
+      const acts = document.createElement('div'); acts.className = 'actions'
+      const b = document.createElement('button'); b.textContent = '转播'
+      b.onclick = async () => {
+        $('relayUrl').value = r.url; $('relayName').value = r.name
+        await $('startBtn').onclick()
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      acts.appendChild(b); li.appendChild(acts); ul.appendChild(li)
+    })
+  } catch (e) { toast('搜索失败：' + e.message) }
+}
+
+async function loadPresets() {
+  try {
+    const { presets } = await api('/api/presets')
+    const ul = $('presetList'); ul.innerHTML = ''
+    presets.forEach((p) => {
+      const li = document.createElement('li')
+      li.innerHTML = `<div><div class="name">${esc(p.name)}</div>
+        <div class="meta">${esc(p.url)}</div></div>`
+      const acts = document.createElement('div'); acts.className = 'actions'
+      const go = document.createElement('button'); go.textContent = '转播'
+      go.onclick = async () => { $('relayUrl').value = p.url; $('relayName').value = p.name; await $('startBtn').onclick() }
+      const del = document.createElement('button'); del.className = 'ghost'; del.textContent = '删除'
+      del.onclick = async () => { await api('/api/presets?url=' + encodeURIComponent(p.url), { method: 'DELETE' }); await loadPresets() }
+      acts.append(go, del); li.appendChild(acts); ul.appendChild(li)
+    })
+  } catch (e) { toast('预设加载失败：' + e.message) }
+}
+
+$('presetAdd').onclick = async () => {
+  const name = $('presetName').value.trim(), url = $('presetUrl').value.trim()
+  if (!name || !url) return toast('请填写预设名称与地址')
+  await api('/api/presets', { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ name, url }) })
+  $('presetName').value = ''; $('presetUrl').value = ''
+  await loadPresets(); toast('预设已添加')
+}
+
+$('copyBtn').onclick = () => {
+  $('shareUrl').select(); document.execCommand('copy'); toast('已复制')
+}
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
+
+// visualizer for main player
+const ac = new (window.AudioContext || window.webkitAudioContext)()
+let srcNode = null, analyser = null, data = null
+function setupViz(audioEl) {
+  if (srcNode) try { srcNode.disconnect() } catch {}
+  srcNode = ac.createMediaElementSource(audioEl)
+  analyser = ac.createAnalyser(); analyser.fftSize = 256
+  data = new Uint8Array(analyser.frequencyBinCount)
+  srcNode.connect(analyser); analyser.connect(ac.destination)
+  draw()
+}
+let vizOn = false
+function draw() {
+  if (!analyser) return requestAnimationFrame(draw)
+  const cv = $('viz'), ctx = cv.getContext('2d')
+  cv.width = cv.clientWidth; cv.height = 54
+  const render = () => {
+    requestAnimationFrame(render)
+    analyser.getByteFrequencyData(data)
+    ctx.clearRect(0,0,cv.width,cv.height)
+    const bw = cv.width / data.length
+    for (let i=0;i<data.length;i++){
+      const h = (data[i]/255)*cv.height
+      ctx.fillStyle = `hsl(${200 + i/data.length*60},80%,60%)`
+      ctx.fillRect(i*bw, cv.height-h, bw-1, h)
+    }
+  }
+  render()
+}
+$('mainAudio').addEventListener('play', () => { if (!vizOn) { setupViz($('mainAudio')); vizOn = true } ac.resume() })
+
+// init
+$('shareUrl').value = location.origin
+loadPresets(); refresh()
+setInterval(refresh, 5000)
+</script>
+</body>
+</html>

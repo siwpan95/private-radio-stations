@@ -1,0 +1,43 @@
+# Private Radio Stations — Cordis plugin registry & configuration
+#
+# Each key under `plugins` maps to src/plugins/<key>.js (default export = a
+# Cordis plugin function). Plugins are applied in declaration order, then a
+# `ready` event is emitted (see src/loader.js). This mirrors the deployment
+# shape of deepseek-harness (Cordis + yml-driven plugin loading).
+
+plugins:
+  # Foundation service: resolves paths, port, ffmpeg binary, HLS/mount config.
+  # MUST stay first so ctx.config is available to the services below.
+  config:
+    port: 8000
+    host: 0.0.0.0
+    defaultBitrate: 128
+    chunkSize: 4096
+    transcodeMounts: [64, 320]
+    hls:
+      enabled: true
+      dir: hls
+      segmentSec: 4
+      listSize: 6
+      deleteThreshold: 3
+      bitrate: 128
+    ffmpegDir: ffmpeg
+    presetsFile: presets.json
+
+  # Relay state machine (idle <-> relay) with multi-source failover.
+  station: {}
+
+  # Proxies the active source and spawns ffmpeg for per-client transcode mounts.
+  streamer: {}
+
+  # HLS segment slicing via ffmpeg, driven by relay lifecycle events.
+  hls: {}
+
+  # Radio-Browser.info global station search.
+  browse: {}
+
+  # presets.json read/write (dedupe + atomic write).
+  presets: {}
+
+  # HTTP API + control-panel UI.
+  web: {}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PyRadio Relay · 设置</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="wrap">
+    <h1>⚙ PyRadio 转播 · 设置</h1>
+    <p class="lead">配置电台服务器地址。控制面板 / 收听端口，默认 http://localhost:8000。</p>
+
+    <section class="card">
+      <h2>服务器</h2>
+      <label>电台地址</label>
+      <input id="serverUrl" placeholder="http://localhost:8000" />
+      <p class="hint">弹出窗里的“转播 / 停止 / 收藏”都连这个地址。改完点“保存”。</p>
+    </section>
+
+    <div class="actions">
+      <button id="save" class="primary">保存</button>
+      <span id="msg"></span>
+    </div>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

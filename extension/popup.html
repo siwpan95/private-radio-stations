@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PyRadio Relay</title>
+<link rel="stylesheet" href="popup.css">
+<style>
+  .relay { margin-top: 10px; }
+  .relay input {
+    width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06);
+    color: var(--text, #eee); font-size: 12px;
+  }
+  .relay .row { display: flex; gap: 6px; margin-top: 8px; }
+  .relay .row .ctrl { flex: 1; }
+  .listeners { font-size: 11px; opacity: .7; margin-top: 8px; }
+  .hint { font-size: 11px; opacity: .6; margin-top: 6px; line-height: 1.4; }
+</style>
+</head>
+<body>
+  <main id="app">
+    <header class="topbar">
+      <div class="logo">📻</div>
+      <div class="brand">
+        <div class="name">PyRadio 转播</div>
+        <div class="sub" id="mode">连接中…</div>
+      </div>
+      <button class="icon-btn" id="openOptions" title="设置">⚙</button>
+    </header>
+
+    <section class="now">
+      <div class="meta">
+        <div class="title" id="title">—</div>
+        <div class="sub" id="sub">—</div>
+      </div>
+    </section>
+
+    <section class="relay">
+      <input id="relayUrl" placeholder="http://某个网络电台/stream" />
+      <div class="row">
+        <button class="ctrl primary" id="startRelay">▶ 转播</button>
+        <button class="ctrl" id="stopRelay">■ 停止</button>
+        <button class="ctrl" id="fav" title="收藏到预设">★</button>
+      </div>
+      <div class="listeners" id="listeners">听众 0</div>
+      <div class="hint">转播任意 http(s) 音频流（MP3/AAC 最佳）。收藏会写入 presets.json。</div>
+    </section>
+
+    <div class="status" id="status">本地电台 · localhost:8000</div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
