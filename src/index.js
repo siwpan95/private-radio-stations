@@ -20,3 +20,12 @@ async function shutdown(signal) {
 
 process.on('SIGINT', () => shutdown('SIGINT'))
 process.on('SIGTERM', () => shutdown('SIGTERM'))
+
+// 未捕获异常也落盘（logfile 插件已接管 ctx.logger），方便后台运行时排障
+process.on('uncaughtException', (err) => {
+  try { ctx.logger.error('uncaughtException: ' + (err && err.stack ? err.stack : err)) } catch { /* ignore */ }
+  console.error(err)
+})
+process.on('unhandledRejection', (reason) => {
+  try { ctx.logger.error('unhandledRejection: ' + reason) } catch { /* ignore */ }
+})

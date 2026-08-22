@@ -110,11 +110,17 @@ class WebService extends Service {
 
     const url = new URL(req.url, `http://${req.headers.host}`)
     const pathname = decodeURIComponent(url.pathname)
-    const { station, streamer, hls, browse, presets, config } = this.ctx
+    const { station, streamer, hls, browse, presets, config, logfile } = this.ctx
 
     // ---- API ----
     if (pathname === '/api/status') {
-      return this.json(res, 200, station.status())
+      const s = station.status()
+      s.uptime = Math.round(process.uptime())
+      s.ffmpeg_children = streamer.children ? streamer.children.size : 0
+      s.hls = hls.status ? hls.status() : {}
+      s.logfile = logfile.status ? logfile.status() : {}
+      s.recent_errors = logfile.recentErrors ? logfile.recentErrors() : []
+      return this.json(res, 200, s)
     }
 
     if (pathname === '/api/relay' && req.method === 'POST') {
@@ -338,7 +344,7 @@ class WebService extends Service {
   }
 }
 
-WebService.inject = ['config', 'station', 'streamer', 'hls', 'browse', 'presets']
+WebService.inject = ['config', 'station', 'streamer', 'hls', 'browse', 'presets', 'logfile']
 
 export default function webPlugin(ctx) {
   ctx.plugin(WebService)

@@ -68,6 +68,25 @@ class HlsService extends Service {
     this.ctx.logger.info('hls start (' + url + ') -> ' + this.hlsDir + '/live.m3u8 (' + vs.map((b) => b + 'k').join('/') + ')')
   }
 
+  // 切片健康：最新分片年龄（秒）与分片数。> 2×segmentSec 说明切片卡了。
+  status() {
+    let latestSegAge = null
+    let segments = 0
+    try {
+      const dir = this.hlsDir
+      let newest = 0
+      for (const f of fs.readdirSync(dir)) {
+        if (f.endsWith('.ts')) {
+          segments += 1
+          const m = fs.statSync(path.join(dir, f)).mtimeMs
+          if (m > newest) newest = m
+        }
+      }
+      if (newest) latestSegAge = Math.round((Date.now() - newest) / 1000)
+    } catch { /* ignore */ }
+    return { running: !!this.child, latest_segment_age_s: latestSegAge, segments }
+  }
+
   stop() {
     if (this.child) {
       try { this.child.kill('SIGKILL') } catch { /* ignore */ }

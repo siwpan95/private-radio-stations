@@ -25,6 +25,9 @@ plugins:
     ffmpegDir: ffmpeg
     presetsFile: presets.json
 
+  # File logging + in-memory error ring (data/logs/radio.log, size-capped).
+  logfile: {}
+
   # Relay state machine (idle <-> relay) with multi-source failover.
   station: {}
 

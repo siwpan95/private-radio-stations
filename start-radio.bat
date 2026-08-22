@@ -4,13 +4,8 @@ setlocal
 cd /d "D:\private-radio-stations-2.0"
 set NODE_OPTIONS=
 set PORT=8000
-set PROXY_PORT=8898
-
-REM --- prefer the known F:\node runtime, fall back to PATH ---
-set "NODE_EXE=node"
-if exist "F:\node\node.exe" set "NODE_EXE=F:\node\node.exe"
-set "NPM=npm"
-if exist "F:\node\npm.cmd" set "NPM=F:\node\npm.cmd"
+set PROXY_PORT=8899
+set NPM_PROXY_PORT=%PROXY_PORT%
 
 REM --- start local npm mirror proxy if not already listening ---
 curl -s -o nul -m 2 http://127.0.0.1:%PROXY_PORT%/ >nul 2>&1
@@ -32,17 +27,17 @@ goto waitproxy
 REM --- install deps through proxy if missing ---
 if not exist node_modules (
   echo [start-radio] installing dependencies via mirror proxy...
-  %NPM% install --no-audit --no-fund --registry=http://127.0.0.1:%PROXY_PORT%
+  npm install --no-audit --no-fund --registry=http://127.0.0.1:%PROXY_PORT%
 )
 
 echo [start-radio] starting relay radio on http://localhost:8000
-%NODE_EXE% src/index.js
+node src/index.js
 goto end
 
 :proxyfail
 echo [start-radio] mirror proxy unavailable; installing without proxy
-if not exist node_modules ( %NPM% install --no-audit --no-fund )
-%NODE_EXE% src/index.js
+if not exist node_modules ( npm install --no-audit --no-fund )
+node src/index.js
 
 :end
 endlocal

@@ -9,10 +9,19 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node src/index.js"
+    "dev": "node src/index.js",
+    "check": "node scripts/check.mjs",
+    "test": "node --test test/station.test.mjs test/presets.test.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "dev:web": "vite",
+    "build:web": "vite build",
+    "postinstall": "node scripts/install-hooks.mjs && npm run build:web"
   },
   "dependencies": {
     "cordis": "4.0.0-rc.8",
     "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0"
   }
 }
