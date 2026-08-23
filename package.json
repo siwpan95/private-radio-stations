@@ -1,0 +1,19 @@
+{
+  "name": "local-video-relay",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local video relay station (Node.js + Cordis): pulls remote video streams with ffmpeg, rebroadcasts via MediaMTX (RTSP/HLS/WebRTC), with presets, failover, recording and a web control panel.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "cordis": "4.0.0-rc.8",
+    "js-yaml": "^4.1.0"
+  }
+}

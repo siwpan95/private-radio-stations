@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Mux 测试直播流",
+    "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+    "desc": "H.264+AAC · 公开 24/7 测试直播源（已验证）",
+    "icon": "🧪"
+  },
+  {
+    "name": "Tears of Steel（电影短片）",
+    "url": "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
+    "desc": "H.264 · HLS 点播（播完即停，已验证）",
+    "icon": "🎬"
+  },
+  {
+    "name": "Mux 高清演示流",
+    "url": "https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8",
+    "desc": "H.264 · 高清演示（已验证）",
+    "icon": "🎞️"
+  }
+]

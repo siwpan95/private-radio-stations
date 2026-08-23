@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>本地视频转播站</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>📺 本地视频转播站</h1>
+    <div class="header-right">
+      <span id="mode-badge" class="badge idle">空闲</span>
+      <span id="version" class="muted"></span>
+    </div>
+  </header>
+
+  <main>
+    <!-- 状态区 -->
+    <section class="card" id="status-card">
+      <h2>🩺 状态</h2>
+      <div class="chips" id="chips"></div>
+      <div id="current-info" class="current-info hidden">
+        <div class="ci-name"></div>
+        <div class="ci-url"></div>
+      </div>
+      <div id="error-box" class="error-box hidden"></div>
+    </section>
+
+    <!-- 控制区 -->
+    <section class="card">
+      <h2>🎛️ 控制</h2>
+
+      <h3 class="sub">⭐ 预设频道（点击开始转播）</h3>
+      <div id="presets" class="presets"></div>
+
+      <h3 class="sub">➕ 添加预设</h3>
+      <form id="preset-form" class="preset-form">
+        <input id="p-name" placeholder="名称（如 央视一套）">
+        <input id="p-url" placeholder="流地址 http(s)://…/xxx.m3u8 或 rtsp://…">
+        <button type="submit" class="btn small">添加</button>
+      </form>
+
+      <h3 class="sub">🔗 手动转播</h3>
+      <form id="relay-form" class="relay-form">
+        <div class="row">
+          <input id="r-name" placeholder="名称（可选）">
+          <input id="r-url" placeholder="流地址（必填）http(s)/rtsp/rtmp…">
+        </div>
+        <textarea id="r-fallbacks" rows="2" placeholder="备用源地址，每行一个（可选，主源连续失败后自动切换）"></textarea>
+        <div class="row opts">
+          <label><input type="checkbox" id="r-transcode"> 转码 H.264+AAC（HEVC/AV1 源或老设备勾选）</label>
+          <label><input type="checkbox" id="r-record"> 同时录像</label>
+          <button type="submit" class="btn primary" id="btn-start">▶ 开始转播</button>
+          <button type="button" class="btn danger" id="btn-stop">⏹ 停止转播</button>
+        </div>
+      </form>
+
+      <div class="row" id="record-row">
+        <button type="button" class="btn" id="btn-record">⏺ 开始录像</button>
+        <span class="muted">录像文件保存在 recordings/，可独立于转播开关</span>
+      </div>
+    </section>
+
+    <!-- 观看区 -->
+    <section class="card">
+      <h2>👀 观看</h2>
+      <div id="player-wrap" class="player-wrap hidden">
+        <iframe id="player" allow="autoplay; fullscreen" allowfullscreen></iframe>
+        <div class="player-hint muted">上方为 MediaMTX 自带 WebRTC 播放页（浏览器低延迟）。打不开就点右侧链接用播放器。</div>
+      </div>
+      <div id="player-idle" class="player-idle">未在转播。开始转播后这里会出现网页预览。</div>
+
+      <div class="links" id="links"></div>
+
+      <h3 class="sub">💿 录像文件</h3>
+      <table class="recs" id="recs">
+        <thead><tr><th>文件</th><th>大小</th><th>时间</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="muted">
+    OBS 推流模式：OBS 设置 → 推流 → 服务器 <code>rtmp://&lt;本机IP&gt;:1935/obs</code>、密钥留空 →
+    观众看 <code>rtsp://&lt;本机IP&gt;:8554/obs</code> / <code>http://&lt;本机IP&gt;:8888/obs/index.m3u8</code>（路径名避开 live 即可）。
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+node_modules/
+recordings/
+data/
+ffmpeg/
+# mediamtx 二进制与运行时文件不入库，仅保留 MediaMTX 的 LICENSE 归属说明
+mediamtx/*
+!mediamtx/LICENSE
+downloads/
+*.log
+*.zip
+__pycache__/
+*.pyc
