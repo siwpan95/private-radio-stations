@@ -210,7 +210,7 @@ function startWatcher(ctx, { yamlPath, pluginsDir, scope, state }) {
     const doc = parseCordisYml(fs.readFileSync(yamlPath, 'utf8'));
     const norm = normalizeEntries(doc);
     const next = composeEntries(norm.entries, loadPatchFiles(yamlPath));
-    applyDiff(ctx, { next, state, pluginsDir, scope });
+    await applyDiff(ctx, { next, state, pluginsDir, scope });
   }
 
   try {

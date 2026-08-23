@@ -14,6 +14,7 @@ await start(ctx, {
   yamlPath: path.join(root, 'cordis.yml'),
   pluginsDir: path.join(__dirname, 'plugins'),
   root,
+  watch: true, // P8A：cordis.patch.yml 热重载
 })
 ctx.logger.info('private-radio-stations (Node.js + Cordis) started')
 

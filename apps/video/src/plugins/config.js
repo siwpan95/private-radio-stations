@@ -34,6 +34,21 @@ class ConfigService extends Service {
   constructor(ctx, cfg) {
     super(ctx, 'config')
     Object.assign(this, cfg)
+    // P8A：config 行热更新白名单（仅结构性无关键，下一次动作生效）
+    this.ctx.on('config:update', (ev) => {
+      if (ev.id !== 'config') return
+      const changed = []
+      for (const k of HOT_KEYS) {
+        if (ev.config && k in ev.config && JSON.stringify(ev.config[k]) !== JSON.stringify(ev.previous[k])) {
+          this[k] = ev.config[k]
+          changed.push(k)
+        }
+      }
+      if (changed.length) {
+        this.ctx.logger.info('[hmr] config 白名单键已热更新: ' + changed.join(', '))
+        this.ctx.emit('config:changed', { keys: changed, config: this })
+      }
+    })
   }
 }
 
@@ -62,7 +77,13 @@ const ConfigSchema = Schema.object({
   pythonCmd: Schema.string().default('python'),
 })
 
+// P8A 白名单：config 行热更新时，仅结构性无关的键在下一次动作生效
+const HOT_KEYS = ['transcode', 'record', 'pythonCmd', 'liveDir']
+
 export default function configPlugin(ctx, rawConfig = {}) {
+  // 注意：config:update 处理器必须在 Service 构造器里注册（插件函数作用域拿不到
+  // ctx.config——cordis inject 约束），并持有服务实例引用直接改字段。
+
   // 启动即校验：yml 拼错/类型错当场报错退出（schemastery 错误自带 JSON 路径）
   let config
   try {

@@ -33,9 +33,9 @@ class LogfileService extends Service {
   constructor(ctx, cfg) {
     super(ctx, 'logfile')
     const root = (ctx.config && ctx.config.root) || process.cwd()
-    const dir = path.resolve(root, 'data', 'logs')
-    fs.mkdirSync(dir, { recursive: true })
-    this.file = path.join(dir, (cfg && cfg.file) || 'app.log')
+    // cfg.file 相对应用根解析（如 data/logs/stream.log），并确保父目录存在
+    this.file = path.isAbsolute(cfg && cfg.file) ? cfg.file : path.resolve(root, (cfg && cfg.file) || path.join('data', 'logs', 'app.log'))
+    fs.mkdirSync(path.dirname(this.file), { recursive: true })
     this.bytes = 0
     try { this.bytes = fs.statSync(this.file).size } catch { /* ignore */ }
     this.errors = []
