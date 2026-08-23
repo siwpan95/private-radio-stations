@@ -112,6 +112,35 @@ test('relay:pre-start 监听器返回 false 可否决开播', async () => {
   assert.ok(ctx.station.error.includes('拦截'))
 })
 
+
+// ---- 运行时不变量（HARNESS P5）----
+import invariantsPlugin from '@relay/core/src/invariants.js'
+
+test('合法迁移序列不触发不变量失败', async () => {
+  const ctx = makeCtx()
+  ctx.plugin(invariantsPlugin, {})
+  await tick()
+  ctx.station.setRelay('http://a/stream', '台A', ['http://b/stream'])
+  ctx.station.noteFailure()
+  ctx.station.noteFailure()
+  ctx.station.noteFailure() // 切源
+  ctx.station.stopRelay()
+  assert.deepEqual(ctx.invariants.failures, [])
+  assert.equal(ctx.invariants.status().checks, 5)
+})
+
+test('状态被破坏时（relay 但 current 为空）不变量会报出', async () => {
+  const ctx = makeCtx()
+  ctx.plugin(invariantsPlugin, {})
+  await tick()
+  ctx.station.setRelay('http://a/stream', '台A')
+  // 人为破坏：直接改状态（绕过迁移方法）
+  ctx.station.current = null
+  ctx.invariants.run('test') // 对破坏态直接执行断言
+  assert.ok(ctx.invariants.failures.length >= 1)
+  assert.ok(ctx.invariants.failures[0].includes('relay 状态一致'))
+})
+
 test('status 包含版本与健康字段', async () => {
   const ctx = makeCtx()
   await tick()

@@ -5,6 +5,9 @@
 import { Service } from 'cordis'
 
 export class StationBase extends Service {
+  _registered = false
+  _pairing = false // relay:start 与 relay:stop 配对追踪
+
   constructor(ctx, name = 'station') {
     super(ctx, name)
     this.mode = 'idle'
@@ -47,6 +50,7 @@ export class StationBase extends Service {
       return
     }
     this.ctx.emit('relay:start', this.current)
+    this._assert('relay:start')
     this.ctx.logger.info(`relay start: ${this.current.name} (${this.current.url})`)
   }
 
@@ -59,6 +63,7 @@ export class StationBase extends Service {
     this.error = null
     this.startedAt = null
     this.ctx.emit('relay:stop')
+    this._assert('relay:stop')
     this.ctx.logger.info('relay stopped')
   }
 
@@ -93,7 +98,44 @@ export class StationBase extends Service {
     this.failureCount = 0
     this.error = null
     this.ctx.emit('relay:source', this.current)
+    this._assert('relay:source')
     this.ctx.logger.warn(`failover -> ${this.current.name} (${this.current.url})`)
+  }
+
+  // ---- 运行时不变量（HARNESS P5）：事件配对 / 数据守恒 ----
+  _ensureInvariants() {
+    if (this._registered || !this.ctx.invariants) return
+    this._registered = true
+    const inv = this.ctx.invariants
+    inv.register('station.mode 合法', () => ['idle', 'relay'].includes(this.mode))
+    inv.register('station.relay 状态一致', () => {
+      const inRelay = this.mode === 'relay'
+      const hasCurrent = !!this.current && this.sources.length > 0
+      if (inRelay !== hasCurrent) throw new Error('mode=' + this.mode + ' current=' + JSON.stringify(this.current) + ' sources=' + this.sources.length)
+    })
+    inv.register('station.FIFO 守恒', () => {
+      if (this.current && this.sources.length && this.current !== this.sources[0]) {
+        throw new Error('current 不是 sources[0]，切换源后队列被破坏')
+      }
+    })
+    inv.register('station.failureCount 范围', () => {
+      if (this.failureCount < 0 || this.failureCount > this.maxFailures) {
+        throw new Error('failureCount=' + this.failureCount + ' 超出 [0,' + this.maxFailures + ']')
+      }
+    })
+    inv.register('station.relay 事件配对', () => {
+      if (this.mode === 'idle' && this._pairing) throw new Error('relay:stop 已发但配对标志未清')
+    })
+    this.ctx.on('relay:start', () => {
+      if (this._pairing) this.ctx.logger.error('[INVARIANT] relay:start 重复触发（缺少 relay:stop）')
+      this._pairing = true
+    })
+    this.ctx.on('relay:stop', () => { this._pairing = false })
+  }
+
+  _assert(tag) {
+    try { this._ensureInvariants() } catch { /* 注册失败不阻塞 */ }
+    if (this.ctx.invariants) this.ctx.invariants.run(tag)
   }
 
   activeUrl() {
@@ -114,3 +156,5 @@ export class StationBase extends Service {
     }
   }
 }
+
+StationBase.inject = ['config', 'invariants']

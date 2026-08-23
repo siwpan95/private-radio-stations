@@ -18,7 +18,7 @@ class StationService extends StationBase {
   }
 }
 
-StationService.inject = ['config']
+StationService.inject = [...StationBase.inject]
 
 export default function stationPlugin(ctx) {
   ctx.plugin(StationService)

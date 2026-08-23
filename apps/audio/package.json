@@ -19,7 +19,8 @@
   "dependencies": {
     "cordis": "4.0.0-rc.8",
     "js-yaml": "^4.1.0",
-    "@relay/core": "*"
+    "@relay/core": "*",
+    "schemastery": "^3.18.0"
   },
   "devDependencies": {
     "vite": "^7.0.0"

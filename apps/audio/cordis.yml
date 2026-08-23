@@ -29,6 +29,9 @@ plugins:
   logfile:
     file: data/logs/radio.log
 
+  # Runtime invariants (HARNESS P5): event pairing / data conservation assertions.
+  invariants: {}
+
   # Relay state machine (idle <-> relay) with multi-source failover.
   station: {}
 

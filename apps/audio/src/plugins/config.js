@@ -1,6 +1,8 @@
 // config plugin — resolves runtime configuration and locates the ffmpeg binary.
 // Provides `ctx.config` to every other service.
+// 配置校验与默认值由 schemastery 声明式 schema 承担（HARNESS P4）。
 import { Service } from 'cordis'
+import Schema from 'schemastery'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -8,11 +10,6 @@ import { execFileSync } from 'node:child_process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..', '..') // src/plugins -> src -> root
-
-// NOTE: F:\ffmpeg-8.1.2 and F:\ffmpeg-9.0.1 are *source trees* (configure /
-// libavcodec / fftools ...), not built binaries — they cannot be executed.
-// This project bundles a prebuilt binary at ffmpeg/ffmpeg.exe instead.
-const FFMPEG_SOURCE_DIRS = ['F:\\ffmpeg-8.1.2', 'F:\\ffmpeg-9.0.1']
 
 function detectFfmpeg(root, ffmpegDir) {
   const candidates = [
@@ -43,53 +40,42 @@ class ConfigService extends Service {
   }
 }
 
-// ---- cordis.yml 配置 schema（校验器来自 @relay/core，与视频应用共用）----
-// schema 表留在各应用（字段不同），校验逻辑共享
-const CONFIG_SCHEMA = {
-  port: { type: 'number', min: 1, max: 65535 },
-  host: { type: 'string' },
-  defaultBitrate: { type: 'number', min: 8, max: 512 },
-  chunkSize: { type: 'number', min: 256, max: 65536 },
-  transcodeMounts: { type: 'array', of: 'number', min: 1 },
-  hls: {
-    type: 'object',
-    fields: {
-      enabled: { type: 'boolean' },
-      dir: { type: 'string' },
-      segmentSec: { type: 'number', min: 1, max: 30 },
-      listSize: { type: 'number', min: 1, max: 60 },
-      deleteThreshold: { type: 'number', min: 0 },
-      variants: { type: 'array', of: 'number', min: 1 },
-    },
-  },
-  ffmpegDir: { type: 'string' },
-  presetsFile: { type: 'string' },
-}
+// ---- cordis.yml 配置 schema（schemastery 声明式）----
+const ConfigSchema = Schema.object({
+  port: Schema.number().min(1).max(65535).default(8000),
+  host: Schema.string().default('0.0.0.0'),
+  defaultBitrate: Schema.number().min(8).max(512).default(128),
+  chunkSize: Schema.number().min(256).max(65536).default(4096),
+  transcodeMounts: Schema.array(Schema.number()).default([64, 320]),
+  hls: Schema.object({
+    enabled: Schema.boolean().default(true),
+    dir: Schema.string().default('hls'),
+    segmentSec: Schema.number().min(1).max(30).default(4),
+    listSize: Schema.number().min(1).max(60).default(6),
+    deleteThreshold: Schema.number().min(0).default(3),
+    variants: Schema.array(Schema.number()).default([128, 64]),
+  }).default({}),
+  ffmpegDir: Schema.string().default('ffmpeg'),
+  presetsFile: Schema.string().default('presets.json'),
+})
 
-import { validateConfig } from '@relay/core/src/config-validate.js'
-
-export default function configPlugin(ctx, config = {}) {
-  // 启动即校验：yml 拼错/类型错当场报错退出，而不是运行中静默降级
-  validateConfig(config, CONFIG_SCHEMA, 'config')
-
-  const port = Number(process.env.PORT) || config.port || 8000
-  const host = config.host || '0.0.0.0'
-  const defaultBitrate = config.defaultBitrate || 128
-  const chunkSize = config.chunkSize || 4096
-  const transcodeMounts = Array.isArray(config.transcodeMounts)
-    ? config.transcodeMounts.slice()
-    : [64, 320]
-  const hls = Object.assign(
-    { enabled: true, dir: 'hls', segmentSec: 4, listSize: 6, deleteThreshold: 3, variants: [128, 64] },
-    config.hls || {}
-  )
-  if (!Array.isArray(hls.variants) || !hls.variants.length) {
-    hls.variants = [Number(hls.bitrate) || 128]
+export default function configPlugin(ctx, rawConfig = {}) {
+  let config
+  try {
+    config = new ConfigSchema(rawConfig)
+  } catch (e) {
+    throw new Error('cordis.yml 配置错误（plugins.config）：' + (e && e.message ? e.message : e), { cause: e })
   }
-  const ffmpegDir = config.ffmpegDir || 'ffmpeg'
-  const presetsFile = path.resolve(ROOT, config.presetsFile || 'presets.json')
 
-  const ffmpeg = detectFfmpeg(ROOT, ffmpegDir)
+  const port = Number(process.env.PORT) || config.port
+  const transcodeMounts = config.transcodeMounts.slice()
+  const hls = { ...config.hls }
+  if (!Array.isArray(hls.variants) || !hls.variants.length) {
+    hls.variants = [128]
+  }
+  const presetsFile = path.resolve(ROOT, config.presetsFile)
+
+  const ffmpeg = detectFfmpeg(ROOT, config.ffmpegDir)
 
   // 应用版本号（package.json），供 /api/status 输出
   let version = 'unknown'
@@ -100,17 +86,13 @@ export default function configPlugin(ctx, config = {}) {
   }
 
   const cfg = {
+    ...config,
     port,
-    host,
-    defaultBitrate,
-    chunkSize,
     transcodeMounts,
     hls,
-    ffmpegDir,
     presetsFile,
     root: ROOT,
     version,
-    ffmpegSourceDirs: FFMPEG_SOURCE_DIRS,
     ffmpeg,
     ffmpegOk() {
       return !!this.ffmpeg
@@ -123,7 +105,7 @@ export default function configPlugin(ctx, config = {}) {
         'Bundled binary expected at ffmpeg/ffmpeg.exe'
     )
   } else {
-    ctx.logger.info(`ffmpeg: ${ffmpeg}`)
+    ctx.logger.info('ffmpeg: ' + ffmpeg)
   }
 
   ctx.plugin(ConfigService, cfg)

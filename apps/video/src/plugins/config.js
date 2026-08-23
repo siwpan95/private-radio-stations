@@ -1,6 +1,8 @@
 // config plugin — resolves runtime configuration and locates the
 // ffmpeg + mediamtx binaries. Provides `ctx.config` to every other service.
+// 配置校验与默认值由 schemastery 声明式 schema 承担（HARNESS P4）。
 import { Service } from 'cordis'
+import Schema from 'schemastery'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -35,68 +37,46 @@ class ConfigService extends Service {
   }
 }
 
-// ---- cordis.yml 配置 schema（校验器来自 @relay/core，与音频应用共用）----
-// schema 表留在各应用（字段不同），校验逻辑共享
-const CONFIG_SCHEMA = {
-  port: { type: 'number', min: 1, max: 65535 },
-  host: { type: 'string' },
-  pathName: { type: 'string' },
-  transcode: { type: 'boolean' },
-  rtspPort: { type: 'number', min: 1, max: 65535 },
-  hlsPort: { type: 'number', min: 1, max: 65535 },
-  webrtcPort: { type: 'number', min: 1, max: 65535 },
-  record: {
-    type: 'object',
-    fields: {
-      enabled: { type: 'boolean' },
-      dir: { type: 'string' },
-    },
-  },
-  mediamtx: {
-    type: 'object',
-    fields: {
-      dir: { type: 'string' },
-      yml: { type: 'string' },
-      apiAddress: { type: 'string' },
-    },
-  },
-  ffmpegDir: { type: 'string' },
-  presetsFile: { type: 'string' },
-  channelsDir: { type: 'string' },
-  liveDir: { type: 'string' },
-  pythonCmd: { type: 'string' },
-}
+// ---- cordis.yml 配置 schema（schemastery 声明式：校验 + 默认值一步到位）----
+const ConfigSchema = Schema.object({
+  port: Schema.number().min(1).max(65535).default(8100),
+  host: Schema.string().default('0.0.0.0'),
+  pathName: Schema.string().default('live'),
+  transcode: Schema.boolean().default(false),
+  rtspPort: Schema.number().min(1).max(65535).default(8554),
+  hlsPort: Schema.number().min(1).max(65535).default(8888),
+  webrtcPort: Schema.number().min(1).max(65535).default(8889),
+  record: Schema.object({
+    enabled: Schema.boolean().default(false),
+    dir: Schema.string().default('recordings'),
+  }).default({}),
+  mediamtx: Schema.object({
+    dir: Schema.string().default('mediamtx'),
+    yml: Schema.string().default('mediamtx.yml'),
+    apiAddress: Schema.string().default('127.0.0.1:9997'),
+  }).default({}),
+  ffmpegDir: Schema.string().default('ffmpeg'),
+  presetsFile: Schema.string().default('presets.json'),
+  channelsDir: Schema.string().default('playlists'),
+  liveDir: Schema.string().default('src/live'),
+  pythonCmd: Schema.string().default('python'),
+})
 
-import { validateConfig } from '@relay/core/src/config-validate.js'
+export default function configPlugin(ctx, rawConfig = {}) {
+  // 启动即校验：yml 拼错/类型错当场报错退出（schemastery 错误自带 JSON 路径）
+  let config
+  try {
+    config = new ConfigSchema(rawConfig)
+  } catch (e) {
+    throw new Error('cordis.yml 配置错误（plugins.config）：' + (e && e.message ? e.message : e), { cause: e })
+  }
 
-export default function configPlugin(ctx, config = {}) {
-  // 启动即校验：yml 拼错/类型错当场报错退出，而不是运行中静默降级
-  validateConfig(config, CONFIG_SCHEMA, 'config')
+  const port = Number(process.env.PORT) || config.port
+  const presetsFile = path.resolve(ROOT, config.presetsFile)
 
-  const port = Number(process.env.PORT) || config.port || 8100
-  const host = config.host || '0.0.0.0'
-  const pathName = config.pathName || 'live'
-  const transcode = config.transcode === true
-  const rtspPort = Number(config.rtspPort) || 8554
-  const hlsPort = Number(config.hlsPort) || 8888
-  const webrtcPort = Number(config.webrtcPort) || 8889
-  const record = Object.assign(
-    { enabled: false, dir: 'recordings' },
-    config.record || {}
-  )
-  const mediamtx = Object.assign(
-    { dir: 'mediamtx', yml: 'mediamtx.yml', apiAddress: '127.0.0.1:9997' },
-    config.mediamtx || {}
-  )
-  const ffmpegDir = config.ffmpegDir || 'ffmpeg'
-  const presetsFile = path.resolve(ROOT, config.presetsFile || 'presets.json')
-  const channelsDir = config.channelsDir || 'playlists'
-  const liveDir = config.liveDir || 'src/live'
-  const pythonCmd = config.pythonCmd || 'python'
-
-  const ffmpeg = detectBinary(ROOT, ffmpegDir, 'ffmpeg')
-  const mediamtxExe = detectBinary(ROOT, mediamtx.dir, 'mediamtx')
-  const mediamtxYml = path.resolve(ROOT, mediamtx.yml)
+  const ffmpeg = detectBinary(ROOT, config.ffmpegDir, 'ffmpeg')
+  const mediamtxExe = detectBinary(ROOT, config.mediamtx.dir, 'mediamtx')
+  const mediamtxYml = path.resolve(ROOT, config.mediamtx.yml)
 
   // 应用版本号（package.json），供 /api/status 输出
   let version = 'unknown'
@@ -107,24 +87,10 @@ export default function configPlugin(ctx, config = {}) {
   }
 
   const cfg = {
+    ...config,
     port,
-    host,
-    pathName,
-    transcode,
-    rtspPort,
-    hlsPort,
-    webrtcPort,
-    record,
-    mediamtx: {
-      dir: mediamtx.dir,
-      yml: mediamtxYml,
-      apiAddress: mediamtx.apiAddress,
-    },
-    ffmpegDir,
     presetsFile,
-    channelsDir,
-    liveDir,
-    pythonCmd,
+    mediamtx: { ...config.mediamtx, yml: mediamtxYml },
     root: ROOT,
     version,
     ffmpeg,

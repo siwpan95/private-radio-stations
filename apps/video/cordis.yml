@@ -34,6 +34,9 @@ plugins:
   # MediaMTX 进程托管：启动/退出守护 + 健康探测（:9997 控制 API）。
   mediamtx: {}
 
+  # 运行时不变量（HARNESS P5）：事件配对 / 数据守恒断言。
+  invariants: {}
+
   # 转播状态机（idle <-> relay）+ 多源 failover + 失败自动重试。
   station: {}
 
