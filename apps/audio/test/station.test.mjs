@@ -3,6 +3,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { Context, Service } from 'cordis'
 import stationPlugin from '../src/plugins/station.js'
+import invariantsPlugin from '@relay/core/src/invariants.js'
 
 class FakeConfig extends Service {
   constructor(ctx, cfg) {
@@ -20,6 +21,7 @@ function makeCtx(cfg = {}) {
     ffmpegOk: () => true,
     ...cfg,
   })
+  ctx.plugin(invariantsPlugin, {})
   ctx.plugin(stationPlugin)
   return ctx
 }

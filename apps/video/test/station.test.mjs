@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { Context, Service } from 'cordis'
 import stationPlugin from '../src/plugins/station.js'
+import invariantsPlugin from '@relay/core/src/invariants.js'
 
 class FakeConfig extends Service {
   constructor(ctx, cfg) {
@@ -23,6 +24,7 @@ function makeCtx(cfg = {}) {
     mediamtxOk: () => true,
     ...cfg,
   })
+  ctx.plugin(invariantsPlugin, {})
   ctx.plugin(stationPlugin)
   return ctx
 }
@@ -114,11 +116,9 @@ test('relay:pre-start 监听器返回 false 可否决开播', async () => {
 
 
 // ---- 运行时不变量（HARNESS P5）----
-import invariantsPlugin from '@relay/core/src/invariants.js'
 
 test('合法迁移序列不触发不变量失败', async () => {
   const ctx = makeCtx()
-  ctx.plugin(invariantsPlugin, {})
   await tick()
   ctx.station.setRelay('http://a/stream', '台A', ['http://b/stream'])
   ctx.station.noteFailure()
@@ -131,7 +131,6 @@ test('合法迁移序列不触发不变量失败', async () => {
 
 test('状态被破坏时（relay 但 current 为空）不变量会报出', async () => {
   const ctx = makeCtx()
-  ctx.plugin(invariantsPlugin, {})
   await tick()
   ctx.station.setRelay('http://a/stream', '台A')
   // 人为破坏：直接改状态（绕过迁移方法）
