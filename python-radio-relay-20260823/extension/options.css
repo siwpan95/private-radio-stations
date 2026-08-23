@@ -1,0 +1,43 @@
+:root {
+  --bg1:#1a0b2e; --bg2:#0d1b3a; --bg3:#06121f;
+  --panel: rgba(255,255,255,0.06);
+  --panel-border: rgba(255,255,255,0.14);
+  --text:#f3e9ff; --text-dim:#b79fd6;
+  --accent:#ff5ed0; --accent-2:#3df0ff;
+  --glow: rgba(255,94,208,0.45);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  color: var(--text); min-height: 100vh; padding: 28px 16px;
+  background: radial-gradient(620px 420px at 12% -10%, color-mix(in srgb, var(--accent) 28%, transparent), transparent),
+    radial-gradient(520px 420px at 100% 0%, color-mix(in srgb, var(--accent-2) 20%, transparent), transparent),
+    linear-gradient(160deg, var(--bg1), var(--bg2) 55%, var(--bg3));
+  background-attachment: fixed;
+}
+.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-size: 20px; letter-spacing: .4px; }
+.lead { color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+.card {
+  background: var(--panel); border: 1px solid var(--panel-border); border-radius: 18px;
+  padding: 18px; backdrop-filter: blur(20px) saturate(160%); box-shadow: 0 18px 50px rgba(0,0,0,0.5);
+}
+.card h2 { font-size: 14px; margin-bottom: 12px; color: var(--accent); }
+label { display: block; font-size: 12px; color: var(--text-dim); margin: 12px 0 6px; }
+label.row { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 13px; margin: 0 0 12px; }
+input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+input[type="text"], input:not([type]) {
+  width: 100%; padding: 10px 12px; border-radius: 10px; font-size: 13px;
+  border: 1px solid var(--panel-border); background: rgba(255,255,255,0.04); color: var(--text);
+}
+input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hint { color: var(--text-dim); font-size: 12px; margin-top: 8px; line-height: 1.5; }
+.actions { display: flex; align-items: center; gap: 12px; }
+button.primary {
+  border: none; border-radius: 12px; padding: 12px 22px; cursor: pointer; font-size: 14px; font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 0 18px var(--glow);
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+button.primary:hover { transform: translateY(-2px); box-shadow: 0 0 24px var(--glow); }
+#msg { font-size: 13px; color: #18c27f; }
+#msg.err { color: #ff8ab0; }

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "每日随机",
+    "time": "23:59",
+    "action": "shuffle"
+  },
+  {
+    "name": "深夜转播 Nightwave",
+    "time": "00:30",
+    "action": "relay",
+    "url": "https://plaza.one/mp3",
+    "name": "Nightwave Plaza"
+  }
+]

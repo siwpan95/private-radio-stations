@@ -1,0 +1,47 @@
+import subprocess
+import time
+import glob
+
+playlist = glob.glob("music/*.mp3")
+ffmpeg_cmd = [
+    "ffmpeg",
+    "-re",                          # 实时读取
+    "-f", "concat",                 # 串联播放列表
+    "-safe", "0",
+    "-i", "playlist.txt",           # 包含文件列表
+    "-c:a", "libmp3lame",           # 转码为 MP3
+    "-b:a", "128k",
+    "-f", "mp3",
+    "icecast://source:密码@127.0.0.1:8000/stream"
+]
+
+# 生成 ffmpeg 的播放列表文件
+with open("playlist.txt", "w") as f:
+    for song in playlist:
+        f.write(f"file '{song}'\n")
+
+proc = subprocess.Popen(ffmpeg_cmd)
+proc.wait()import subprocess
+import time
+import glob
+
+playlist = glob.glob("music/*.mp3")
+ffmpeg_cmd = [
+    "ffmpeg",
+    "-re",                          # 实时读取
+    "-f", "concat",                 # 串联播放列表
+    "-safe", "0",
+    "-i", "playlist.txt",           # 包含文件列表
+    "-c:a", "libmp3lame",           # 转码为 MP3
+    "-b:a", "128k",
+    "-f", "mp3",
+    "icecast://source:密码@127.0.0.1:8000/stream"
+]
+
+# 生成 ffmpeg 的播放列表文件
+with open("playlist.txt", "w") as f:
+    for song in playlist:
+        f.write(f"file '{song}'\n")
+
+proc = subprocess.Popen(ffmpeg_cmd)
+proc.wait()

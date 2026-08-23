@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PyRadio Companion · 设置</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="wrap">
+    <h1>⚙ PyRadio 设置</h1>
+    <p class="lead">配置电台服务器地址，以及把“正在播放”同步到 Discord / Telegram 的凭据。</p>
+
+    <section class="card">
+      <h2>服务器</h2>
+      <label>电台地址</label>
+      <input id="serverUrl" placeholder="http://localhost:8000" />
+      <p class="hint">控制面板 / 收听端口，默认 http://localhost:8000。改完点“保存”。</p>
+    </section>
+
+    <section class="card">
+      <h2>社群同步（C3）</h2>
+      <label class="row"><input type="checkbox" id="enabled" /> 启用自动同步（每切一首自动发布）</label>
+
+      <label>Discord Webhook URL</label>
+      <input id="discord_webhook" placeholder="https://discord.com/api/webhooks/..." />
+
+      <label>Telegram Bot Token</label>
+      <input id="telegram_token" placeholder="123456:ABC-DEF..." />
+
+      <label>Telegram Chat ID</label>
+      <input id="telegram_chat_id" placeholder="123456789" />
+      <p class="hint">凭据只保存在本机扩展与服务器 integrations.json，不会上传别处。</p>
+    </section>
+
+    <div class="actions">
+      <button id="save" class="primary">保存</button>
+      <span id="msg"></span>
+    </div>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>
