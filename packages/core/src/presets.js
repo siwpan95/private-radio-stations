@@ -20,7 +20,9 @@ class PresetsService extends Service {
     }
   }
 
-  add(item) {
+  add(item, legacyUrl) {
+    // 兼容旧签名 add(name, url)（音频项目历史调用）
+    if (typeof item === 'string') item = { name: item, url: legacyUrl }
     const { name = '', url = '', desc = '', icon = '' } = item || {}
     if (!url) return this.list()
     const list = this.list()

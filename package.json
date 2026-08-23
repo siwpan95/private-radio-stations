@@ -12,7 +12,11 @@
     "radio": "npm start --workspace @relay/radio",
     "smoke:video": "npm run smoke --workspace @relay/video",
     "check:radio": "npm run check --workspace @relay/radio",
-    "test:radio": "npm test --workspace @relay/radio"
+    "test:radio": "npm test --workspace @relay/radio",
+    "check": "node scripts/check.mjs",
+    "test": "node --test apps/video/test/*.test.mjs apps/audio/test/*.test.mjs",
+    "smoke:radio": "npm run smoke --workspace @relay/radio",
+    "postinstall": "node scripts/install-hooks.mjs"
   },
   "engines": {
     "node": ">=22"

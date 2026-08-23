@@ -12,6 +12,8 @@ private-radio-stations/
 ```
 
 ## 快速开始
+W+R
+powershell
 
 ```bash
 cd G:\tools\private-radio-stations

@@ -40,6 +40,11 @@ function interpolate(value, scope) {
   return value
 }
 
+// 供质量门禁等复用：按项目 schema（含 !!js）解析 cordis.yml 文本
+export function parseCordisYml(text) {
+  return yaml.load(text, { schema: JS_SCHEMA }) || {}
+}
+
 export async function start(ctx, opts = {}) {
   const yamlPath = opts.yamlPath || path.join(process.cwd(), 'cordis.yml')
   const pluginsDir = opts.pluginsDir || path.join(process.cwd(), 'src', 'plugins')
@@ -47,7 +52,7 @@ export async function start(ctx, opts = {}) {
   const scope = { process, env: process.env, path, __dirname: path.dirname(yamlPath), root }
 
   const raw = await readFile(yamlPath, 'utf8')
-  const doc = yaml.load(raw, { schema: JS_SCHEMA }) || {}
+  const doc = parseCordisYml(raw)
   const plugins = doc.plugins || {}
   const applied = []
 
