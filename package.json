@@ -14,7 +14,7 @@
     "check:radio": "npm run check --workspace @relay/radio",
     "test:radio": "npm test --workspace @relay/radio",
     "check": "node scripts/check.mjs",
-    "test": "node --test apps/video/test/*.test.mjs apps/audio/test/*.test.mjs",
+    "test": "node --test packages/core/test/*.test.mjs apps/video/test/*.test.mjs apps/audio/test/*.test.mjs",
     "smoke:radio": "npm run smoke --workspace @relay/radio",
     "postinstall": "node scripts/install-hooks.mjs",
     "check:video": "npm run check --workspace @relay/video",

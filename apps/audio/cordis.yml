@@ -1,51 +1,48 @@
 # Private Radio Stations — Cordis plugin registry & configuration
-#
-# Each key under `plugins` maps to src/plugins/<key>.js (default export = a
-# Cordis plugin function). Plugins are applied in declaration order, then a
-# `ready` event is emitted (see src/loader.js). This mirrors the deployment
-# shape of deepseek-harness (Cordis + yml-driven plugin loading).
+# P6 行式配置：每行 { id, module?, config?, disabled?, hot? }，按声明顺序应用。
 
 plugins:
   # Foundation service: resolves paths, port, ffmpeg binary, HLS/mount config.
   # MUST stay first so ctx.config is available to the services below.
-  config:
-    port: 8000
-    host: 0.0.0.0
-    defaultBitrate: 128
-    chunkSize: 4096
-    transcodeMounts: [64, 320]
-    hls:
-      enabled: true
-      dir: hls
-      segmentSec: 4
-      listSize: 6
-      deleteThreshold: 3
-      # 多码率 ABR：一个 ffmpeg 进程切多档 AAC，live.m3u8 为 master
-      variants: [128, 64]
-    ffmpegDir: ffmpeg
-    presetsFile: presets.json
+  - id: config
+    config:
+      port: !!js "process.env.PORT || 8000"
+      host: 0.0.0.0
+      defaultBitrate: 128
+      chunkSize: 4096
+      transcodeMounts: [64, 320]
+      hls:
+        enabled: true
+        dir: hls
+        segmentSec: 4
+        listSize: 6
+        deleteThreshold: 3
+        variants: [128, 64]
+      ffmpegDir: ffmpeg
+      presetsFile: presets.json
 
   # File logging + in-memory error ring (impl from @relay/core, size-capped).
-  logfile:
-    file: data/logs/radio.log
+  - id: logfile
+    config:
+      file: data/logs/radio.log
 
   # Runtime invariants (HARNESS P5): event pairing / data conservation assertions.
-  invariants: {}
+  - id: invariants
 
   # Relay state machine (idle <-> relay) with multi-source failover.
-  station: {}
+  - id: station
 
   # Proxies the active source and spawns ffmpeg for per-client transcode mounts.
-  streamer: {}
+  - id: streamer
 
   # HLS segment slicing via ffmpeg, driven by relay lifecycle events.
-  hls: {}
+  - id: hls
 
   # Radio-Browser.info global station search.
-  browse: {}
+  - id: browse
 
   # presets.json read/write (dedupe + atomic write).
-  presets: {}
+  - id: presets
 
   # HTTP API + control-panel UI.
-  web: {}
+  - id: web
