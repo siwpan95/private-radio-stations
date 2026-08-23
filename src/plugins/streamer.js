@@ -63,6 +63,7 @@ class StreamerService extends Service {
       this.disposed = true
       this.stop()
     })
+    process.on('exit', () => this.stop())
   }
 
   get station() {

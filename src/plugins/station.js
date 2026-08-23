@@ -32,6 +32,19 @@ class StationService extends Service {
     this.error = null
     this.mode = 'relay'
     this.startedAt = Date.now()
+    // 拦截点（cordis waterfall）：其它插件可在此否决或改写开播
+    let veto = false
+    try { veto = this.ctx.waterfall('relay:pre-start', this.current) === false } catch (e) {
+      this.ctx.logger.error('relay:pre-start 监听器异常: ' + e)
+    }
+    if (veto) {
+      this.error = '转播被插件拦截（relay:pre-start 返回 false）'
+      this.mode = 'idle'
+      this.current = null
+      this.startedAt = null
+      this.ctx.logger.warn(this.error)
+      return
+    }
     this.ctx.emit('relay:start', this.current)
     this.ctx.logger.info(`relay start: ${this.current.name} (${this.current.url})`)
   }

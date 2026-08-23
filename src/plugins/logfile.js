@@ -11,6 +11,21 @@ const RING_SIZE = 30                   // 内存错误环容量
 
 function fmtArg(a) {
   if (typeof a === 'string') return a
+  if (a instanceof Error) {
+    // 展开错误链（借鉴 harness logger 的 cause/AggregateError 解包）
+    const parts = []
+    let e = a
+    let depth = 0
+    while (e && depth < 5) {
+      parts.push(e.stack || (e.name + ': ' + e.message))
+      if (e instanceof AggregateError && e.errors && e.errors.length) {
+        for (const sub of e.errors) parts.push('  ⤷ ' + fmtArg(sub))
+      }
+      e = e.cause
+      depth += 1
+    }
+    return parts.join('\n')
+  }
   try { return util.inspect(a, { depth: 3, breakLength: 200 }) } catch { return String(a) }
 }
 

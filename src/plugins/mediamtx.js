@@ -23,6 +23,8 @@ class MediamtxService extends Service {
       this.disposed = true
       this.stop()
     })
+    // 兜底：任何正常退出路径都确保杀掉子进程（崩溃/强制退出时由系统回收）
+    process.on('exit', () => this.stop())
   }
 
   get exe() {

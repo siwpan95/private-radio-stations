@@ -36,7 +36,8 @@ RTSP / HLS / WebRTC 三种格式，局域网内任意设备（电脑、手机、
 ## 🚀 快速开始
 
 1. 确保 `mediamtx/mediamtx.exe`、`ffmpeg/ffmpeg.exe` 已就位（见下方「依赖」）。
-2. 双击 `start-stream.bat`（自动装依赖并启动），或手动：
+2. 双击 `start-stream.bat`（自动装依赖并启动；重复双击只会打开面板），或手动：
+   停止服务：双击 `stop-stream.bat`（先走优雅关闭，服务无响应时强制清理本项目的 node/mediamtx/ffmpeg 进程）。
 
 ```bash
 npm install --registry=https://registry.npmmirror.com
@@ -84,6 +85,7 @@ node src/index.js
 | GET  | `/api/status` | 状态（模式/当前源/failover/ffmpeg/MediaMTX/录像/观看地址）|
 | POST | `/api/relay` | 开始转播 `{"url","name?","fallbacks?":[],"transcode?":bool,"record?":bool}` |
 | POST | `/api/relay/stop` | 停止转播 |
+| POST | `/api/shutdown` | 优雅关闭服务（仅本机；或双击 `stop-stream.bat`）|
 | POST | `/api/record` | 开/关录像 `{"on":bool}` |
 | GET  | `/api/recordings` | 录像文件列表 |
 | DELETE | `/api/recordings?name=…` | 删除录像 |
@@ -128,6 +130,12 @@ Gitee：https://gitee.com/siwpan/private-radio-stations/tree/video/（本项目�
 - H.265 源转 RTSP/HLS 在部分浏览器不能放 → 勾选转码；转码码率写死在
   `src/plugins/streamer.js` 的 `buildArgs()` 里，需要可自行改。
 - 换源/停止后，正在观看的播放器需要手动重连（协议特性）。
+## 📚 文档索引
+
+- `docs/MERGE_PLAN.md` — 与音频电台项目（G:\tools\audio）的合并可行性分析与里程碑；
+- `docs/HARNESS_NOTES.md` — 借鉴 deepseek-harness 插件架构的落地清单与路线图；
+- `docs/NETWORK.md` — 本机实测的镜像/网络增强指南（GitHub 镜像、npm/pip 源、列表更新工具）。
+
 ## 📁 目录布局
 
 ```
