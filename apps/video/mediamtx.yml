@@ -1,0 +1,36 @@
+# MediaMTX 配置（由 src/plugins/mediamtx.js 启动时加载）
+# 版本要求：v1.20.x（Windows amd64 发布版）
+
+logLevel: info
+logDestinations: [stdout]
+logFile: data/logs/mediamtx.log
+
+# 各协议监听端口：
+#   RTSP    :8554   -> VLC/PotPlayer/mpv/手机播放器
+#   RTMP    :1935   -> OBS 推流入口（rtmp://127.0.0.1:1935/任意路径名）
+#   HLS     :8888   -> http://IP:8888/live/index.m3u8（网页/手机）
+#   WebRTC  :8889   -> http://IP:8889/live/（浏览器低延迟播放页）
+rtsp: yes
+rtspAddress: :8554
+rtmp: yes
+rtmpAddress: :1935
+hls: yes
+hlsAddress: :8888
+webrtc: yes
+webrtcAddress: :8889
+
+# 控制 API（仅本机），供面板做健康探测
+api: yes
+apiAddress: 127.0.0.1:9997
+metrics: no
+pprof: no
+playback: no
+
+# MoQ（Media-over-QUIC）自签证书：默认生成在运行目录（auto.crt/auto.key），
+# 改成生成到 mediamtx/ 里，保持项目根目录整洁。
+moqServerKey: mediamtx/auto.key
+moqServerCert: mediamtx/auto.crt
+
+# 任意路径名都可读可写：转播用 /live，OBS 推流建议用 /obs 之类别的名字
+paths:
+  all_others:

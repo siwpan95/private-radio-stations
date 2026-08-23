@@ -1,0 +1,20 @@
+{
+  "name": "private-radio-stations",
+  "version": "4.0.0",
+  "private": true,
+  "description": "本地转播站 monorepo：视频转播（ffmpeg + MediaMTX）+ 音频电台（Node 直发）",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "video": "npm start --workspace @relay/video",
+    "radio": "npm start --workspace @relay/radio",
+    "smoke:video": "npm run smoke --workspace @relay/video",
+    "check:radio": "npm run check --workspace @relay/radio",
+    "test:radio": "npm test --workspace @relay/radio"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

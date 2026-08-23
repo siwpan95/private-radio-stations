@@ -1,0 +1,10 @@
+{
+  "name": "@relay/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "转播站公共核心：声明式 loader（启动审计 + !!js）、ffmpeg 参数助手、配置校验器",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>转播电台 · 控制台</title>
+  <script type="module" crossorigin src="/assets/index-DfPJbn3_.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CjAqlZ78.css">
+</head>
+<body>
+<header>
+  <h1>📻 转播电台</h1>
+  <span class="tag">仅转播 · Node.js + Cordis v3</span>
+  <span id="ffmpegState" class="tag"></span>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>状态</h2>
+    <div><span id="modePill" class="status-pill pill-idle">IDLE</span></div>
+    <div class="now" id="nowPlaying">空闲中 — 未转播</div>
+    <div class="health" id="healthLine">—</div>
+    <div class="mounts" id="mounts"></div>
+  </section>
+
+  <section class="panel">
+    <h2>转播控制</h2>
+    <label>音频流地址 (http(s) 任意音频流)</label>
+    <input id="relayUrl" placeholder="https://example.com/stream.mp3" />
+    <label>名称（可选）</label>
+    <input id="relayName" placeholder="我的电台" />
+    <label>备用源（每行一个，主源断线自动切换）</label>
+    <textarea id="relayFallback" placeholder="https://backup1.example/stream.mp3&#10;https://backup2.example/stream.mp3"></textarea>
+    <div class="row" style="margin-top:12px;">
+      <button id="startBtn">▶ 开始转播</button>
+      <button id="stopBtn" class="danger" disabled>■ 停止</button>
+    </div>
+    <div class="player">
+      <label>主播放器（原始流 /stream）</label>
+      <audio id="mainAudio" controls preload="none"></audio>
+      <canvas id="viz"></canvas>
+    </div>
+    <div class="player" id="hlsPlayerWrap" style="display:none;">
+      <label>HLS 播放器（/hls/live.m3u8）</label>
+      <audio id="hlsAudio" controls preload="none"></audio>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>浏览全球电台 (Radio-Browser)</h2>
+    <div class="row">
+      <input id="browseQuery" placeholder="搜索电台名，如 Jazz / Lofi / 北京" />
+      <button id="browseBtn" style="flex:0 0 120px;">搜索</button>
+    </div>
+    <ul class="list" id="browseList" style="margin-top:12px;"></ul>
+  </section>
+
+  <section class="panel">
+    <h2>预设</h2>
+    <div class="row">
+      <input id="presetName" placeholder="预设名称" />
+      <input id="presetUrl" placeholder="流地址" />
+      <button id="presetAdd" style="flex:0 0 90px;">添加</button>
+    </div>
+    <ul class="list" id="presetList" style="margin-top:12px;"></ul>
+  </section>
+
+  <section class="panel">
+    <h2>分享</h2>
+    <p class="hint">复制本机地址发给同局域网设备，或配合隧道工具（ngrok / cloudflared）生成公网地址。</p>
+    <div class="row">
+      <input id="shareUrl" readonly />
+      <button id="copyBtn" class="ghost" style="flex:0 0 90px;">复制</button>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+</body>
+</html>

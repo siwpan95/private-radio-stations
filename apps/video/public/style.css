@@ -1,0 +1,258 @@
+/* 本地视频转播站 — 控制面板样式（暗色主题） */
+:root {
+  --bg: #0f1420;
+  --card: #171e2e;
+  --card2: #1e2740;
+  --fg: #e6ecf7;
+  --muted: #8b97b0;
+  --accent: #4f8cff;
+  --ok: #34c98e;
+  --bad: #f0556a;
+  --warn: #f5a623;
+  --border: #2a3450;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  line-height: 1.55;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(15, 20, 32, 0.92);
+  backdrop-filter: blur(6px);
+  z-index: 5;
+}
+
+header h1 { font-size: 20px; margin: 0; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.card h2 { margin: 0 0 12px; font-size: 16px; }
+.sub { margin: 18px 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
+
+.muted { color: var(--muted); font-size: 13px; }
+code {
+  background: var(--card2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.badge {
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.badge.idle { background: #2a3450; color: var(--muted); }
+.badge.relay { background: rgba(52, 201, 142, 0.15); color: var(--ok); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+}
+.chip.ok { color: var(--ok); border-color: rgba(52, 201, 142, 0.4); }
+.chip.bad { color: var(--bad); border-color: rgba(240, 85, 106, 0.4); }
+
+.current-info {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--card2);
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+}
+.ci-name { font-weight: 600; }
+.ci-url { color: var(--muted); font-size: 12.5px; word-break: break-all; }
+
+.error-box {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(240, 85, 106, 0.12);
+  border: 1px solid rgba(240, 85, 106, 0.4);
+  color: var(--bad);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.hidden { display: none !important; }
+
+.presets { display: flex; flex-wrap: wrap; gap: 10px; }
+.preset {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  gap: 8px;
+  min-width: 200px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.preset:hover { border-color: var(--accent); transform: translateY(-1px); }
+.preset.active { border-color: var(--ok); background: rgba(52, 201, 142, 0.08); }
+.preset-body { display: flex; align-items: center; gap: 8px; flex: 1; }
+.preset-icon { font-size: 20px; }
+.preset-name { font-weight: 600; font-size: 13.5px; }
+.preset-desc { font-size: 12px; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preset-del {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.preset-del:hover { color: var(--bad); background: rgba(240, 85, 106, 0.12); }
+
+.preset-form { display: flex; gap: 8px; flex-wrap: wrap; }
+.preset-form input { flex: 1; min-width: 180px; }
+
+.relay-form .row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.relay-form input[type="text"], .relay-form textarea, .preset-form input, .relay-form input:not([type="checkbox"]) {
+  flex: 1;
+  min-width: 220px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  outline: none;
+}
+.relay-form input:focus, .relay-form textarea:focus, .preset-form input:focus { border-color: var(--accent); }
+.relay-form textarea { width: 100%; resize: vertical; font-family: inherit; }
+.opts { align-items: center; gap: 14px; margin-top: 8px; }
+.opts label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+#record-row { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
+
+.btn {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  transition: filter 0.15s;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.2); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.danger { background: rgba(240, 85, 106, 0.15); border-color: rgba(240, 85, 106, 0.5); color: var(--bad); }
+.btn.small { padding: 5px 12px; font-size: 12.5px; }
+.btn.tiny { padding: 3px 10px; font-size: 12px; margin-right: 6px; }
+
+.player-wrap iframe {
+  width: 100%;
+  height: 420px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #000;
+}
+.player-idle {
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+.player-hint { margin-top: 6px; }
+
+.links { display: grid; gap: 8px; margin-top: 12px; }
+.links-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.link-item { display: flex; align-items: center; gap: 10px; }
+.link-item code { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.recs { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+.recs th, .recs td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.recs th { color: var(--muted); font-weight: 600; }
+.recs td:first-child { word-break: break-all; }
+
+footer {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 8px 24px 24px;
+}
+footer code { background: var(--card); }
+
+@media (max-width: 700px) {
+  main { padding: 12px; }
+  .player-wrap iframe { height: 240px; }
+}
+
+/* ===== IPTV 频道库 / 平台解析 ===== */
+.channels {
+  margin-top: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
+}
+.channel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 10px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.channel:hover { border-color: var(--accent); }
+.channel.active { border-color: var(--ok); background: rgba(52, 201, 142, 0.08); }
+.channel-body { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.channel-body .chip { flex-shrink: 0; }
+.channel-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+select {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  outline: none;
+}
+select:focus { border-color: var(--accent); }
+#ch-search { flex: 1; min-width: 140px; }
+#rs-room { flex: 1; }
+#rs-result { margin-top: 8px; word-break: break-all; }
