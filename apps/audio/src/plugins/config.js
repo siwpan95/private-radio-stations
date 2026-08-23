@@ -43,9 +43,8 @@ class ConfigService extends Service {
   }
 }
 
-// ---- cordis.yml 配置 schema（对齐 deepseek-harness 的 Service.config 思路）----
-// 轻量手写校验：启动时对 yml 原始配置做类型/范围检查，错误带字段路径，
-// 避免拼错字段被静默吞掉。缺失字段由下方默认值补齐，不报错。
+// ---- cordis.yml 配置 schema（校验器来自 @relay/core，与视频应用共用）----
+// schema 表留在各应用（字段不同），校验逻辑共享
 const CONFIG_SCHEMA = {
   port: { type: 'number', min: 1, max: 65535 },
   host: { type: 'string' },
@@ -67,48 +66,7 @@ const CONFIG_SCHEMA = {
   presetsFile: { type: 'string' },
 }
 
-function validateConfig(value, schema, schemaPath) {
-  if (value === undefined || value === null) return
-  const path = schemaPath || 'config'
-  if (schema.type === 'object') {
-    if (typeof value !== 'object' || Array.isArray(value)) {
-      throw new Error('cordis.yml 配置错误：' + path + ' 应为对象（plugins.config.' + path.slice('config.'.length) + '）')
-    }
-    for (const [key, sub] of Object.entries(schema.fields || {})) {
-      validateConfig(value[key], sub, path + '.' + key)
-    }
-    return
-  }
-  if (schema.type === 'array') {
-    if (!Array.isArray(value)) {
-      throw new Error('cordis.yml 配置错误：' + path + ' 应为数组')
-    }
-    if (schema.of === 'number' && value.some((v) => typeof v !== 'number' && !Number.isFinite(Number(v)))) {
-      throw new Error('cordis.yml 配置错误：' + path + ' 应为数字数组（如 [128, 64]）')
-    }
-    if (schema.min && value.length < schema.min) {
-      throw new Error('cordis.yml 配置错误：' + path + ' 至少需要 ' + schema.min + ' 项')
-    }
-    return
-  }
-  const ok =
-    schema.type === 'string' ? typeof value === 'string'
-      : schema.type === 'boolean' ? typeof value === 'boolean'
-        : schema.type === 'number' ? (typeof value === 'number' || Number.isFinite(Number(value)))
-          : true
-  if (!ok) {
-    throw new Error('cordis.yml 配置错误：' + path + ' 应为 ' + schema.type)
-  }
-  if (schema.type === 'number') {
-    const n = Number(value)
-    if (schema.min !== undefined && n < schema.min) {
-      throw new Error('cordis.yml 配置错误：' + path + ' 不能小于 ' + schema.min)
-    }
-    if (schema.max !== undefined && n > schema.max) {
-      throw new Error('cordis.yml 配置错误：' + path + ' 不能大于 ' + schema.max)
-    }
-  }
-}
+import { validateConfig } from '@relay/core/src/config-validate.js'
 
 export default function configPlugin(ctx, config = {}) {
   // 启动即校验：yml 拼错/类型错当场报错退出，而不是运行中静默降级

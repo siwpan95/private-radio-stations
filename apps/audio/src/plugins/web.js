@@ -136,6 +136,20 @@ class WebService extends Service {
       return this.json(res, 200, station.status())
     }
 
+    // 优雅关闭（仅本机 loopback 允许，与视频应用约定一致）
+    if (pathname === '/api/shutdown' && req.method === 'POST') {
+      const remote = req.socket.remoteAddress || ''
+      const isLoopback = remote === '127.0.0.1' || remote === '::1' || remote === '::ffff:127.0.0.1'
+      if (!isLoopback) return this.json(res, 403, { error: '仅允许本机关闭' })
+      this.ctx.logger.info('shutdown requested via /api/shutdown')
+      this.json(res, 200, { ok: true })
+      setTimeout(() => {
+        this.ctx.emit('dispose')
+        setTimeout(() => process.exit(0), 500)
+      }, 150)
+      return
+    }
+
     if (pathname === '/api/browse' && req.method === 'GET') {
       const q = url.searchParams.get('q') || ''
       const results = await browse.search(q)

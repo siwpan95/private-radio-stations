@@ -2,7 +2,7 @@
 REM Local Video Relay - graceful stopper
 setlocal
 chcp 65001 >nul
-cd /d "G:\tools\video"
+cd /d "G:\tools\private-radio-stations\apps\video"
 
 echo [stop-stream] requesting graceful shutdown...
 curl -s -m 5 -X POST http://127.0.0.1:8100/api/shutdown >nul 2>&1

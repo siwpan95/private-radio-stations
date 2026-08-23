@@ -27,8 +27,9 @@ plugins:
     liveDir: src/live        # real-url 平台解析器目录
     pythonCmd: python        # 解析器使用的 Python
 
-  # 文件日志 + 内存错误环（data/logs/stream.log，超限截断）。
-  logfile: {}
+  # 文件日志 + 内存错误环（实现来自 @relay/core，超限截断）。
+  logfile:
+    file: data/logs/stream.log
 
   # MediaMTX 进程托管：启动/退出守护 + 健康探测（:9997 控制 API）。
   mediamtx: {}

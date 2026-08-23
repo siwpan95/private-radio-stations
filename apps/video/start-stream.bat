@@ -2,7 +2,7 @@
 REM Local Video Relay - Node.js launcher
 setlocal
 chcp 65001 >nul
-cd /d "G:\tools\video"
+cd /d "G:\tools\private-radio-stations\apps\video"
 
 REM --- already running? (our own instance answers /api/status) ---
 curl -s -o nul -m 2 http://127.0.0.1:8100/api/status

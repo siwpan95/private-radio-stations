@@ -1,5 +1,5 @@
 {
-  "name": "private-radio-stations",
+  "name": "@relay/radio",
   "version": "3.0.0",
   "private": true,
   "type": "module",
@@ -14,12 +14,12 @@
     "test": "node --test test/station.test.mjs test/presets.test.mjs",
     "smoke": "node scripts/smoke.mjs",
     "dev:web": "vite",
-    "build:web": "vite build",
-    "postinstall": "node scripts/install-hooks.mjs && npm run build:web"
+    "build:web": "vite build"
   },
   "dependencies": {
     "cordis": "4.0.0-rc.8",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "@relay/core": "*"
   },
   "devDependencies": {
     "vite": "^7.0.0"

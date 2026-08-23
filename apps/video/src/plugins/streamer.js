@@ -5,41 +5,10 @@
 import { Service } from 'cordis'
 import { spawn } from 'node:child_process'
 
-// Best-effort playlist (.m3u/.m3u8/.pls) resolver. Returns a direct stream URL.
-// Only fetches tiny text playlists; on any failure it returns the original
-// URL so ffmpeg can attempt it directly.
-async function resolveSource(url) {
-  if (!/(\.m3u8?|\.pls)(\?|$)/i.test(url)) return url
-  try {
-    const resp = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(6000) })
-    if (!resp.ok) return url
-    const text = await resp.text()
-    for (const raw of text.split(/\r?\n/)) {
-      const line = raw.trim()
-      if (/^https?:\/\//i.test(line) && !line.startsWith('#')) return line
-    }
-  } catch {
-    /* ignore — fall through to original URL */
-  }
-  return url
-}
+// ffmpeg 拉流参数助手来自 @relay/core（与音频应用共用）
+import { resolveSource, needsReconnect, RECONNECT_ARGS } from '@relay/core/src/ffmpeg-args.js'
 
-// `-reconnect` is an http(s)/rtmp/... protocol option. Applying it to a
-// local file input makes ffmpeg abort ("Option reconnect not found"), so we
-// only add it for network URLs.
-function needsReconnect(url) {
-  try {
-    return /^(https?:|rtmp:|rtsp:|mms:|srt:|udp:|tcp:)/i.test(new URL(url).protocol)
-  } catch {
-    return false // unparseable => treat as a local file path
-  }
-}
-
-const RECONNECT_ARGS = [
-  '-reconnect', '1',
-  '-reconnect_streamed', '1',
-  '-reconnect_delay_max', '5',
-]
+export { resolveSource, needsReconnect, RECONNECT_ARGS }
 
 const STDRING = 80           // ffmpeg stderr 环形缓冲（供面板/日志排查）
 const SHORT_RUN_SEC = 15     // 运行不足此时长即退出 => 视为拉流失败
@@ -203,7 +172,6 @@ class StreamerService extends Service {
 
 StreamerService.inject = ['config', 'station']
 
-export { resolveSource, needsReconnect, RECONNECT_ARGS }
 export default function streamerPlugin(ctx) {
   ctx.plugin(StreamerService)
 }

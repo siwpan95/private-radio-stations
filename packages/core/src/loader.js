@@ -11,6 +11,7 @@
 //   await start(ctx, { yamlPath: 应用根/cordis.yml, pluginsDir: 应用根/src/plugins })
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import yaml from 'js-yaml'
 
 // !!js 简写在 YAML 规范里映射到 tag:yaml.org,2002:js，注册必须用完整 URI
@@ -54,7 +55,7 @@ export async function start(ctx, opts = {}) {
   for (const [name, rawCfg] of Object.entries(plugins)) {
     let mod
     try {
-      mod = await import(path.join(pluginsDir, name + '.js').replace(/\\/g, '/'))
+      mod = await import(pathToFileURL(path.join(pluginsDir, name + '.js')).href)
     } catch (e) {
       throw new Error('[boot] 插件加载失败 ' + name + ': ' + (e && e.stack ? e.stack : e), { cause: e })
     }

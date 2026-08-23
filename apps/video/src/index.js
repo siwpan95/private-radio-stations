@@ -1,11 +1,20 @@
 // Bootstrap: build the Cordis root context, load plugins from cordis.yml, and
 // wire graceful shutdown. Run with:  node src/index.js   (or start-stream.bat)
 import { Context } from 'cordis'
-import { start } from './loader.js'
+import { start } from '@relay/core'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const root = path.resolve(__dirname, '..')
 
 const ctx = new Context()
 
-await start(ctx)
+await start(ctx, {
+  yamlPath: path.join(root, 'cordis.yml'),
+  pluginsDir: path.join(__dirname, 'plugins'),
+  root,
+})
 ctx.logger.info('local-video-relay (Node.js + Cordis + MediaMTX) started')
 
 let shuttingDown = false
