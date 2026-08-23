@@ -1,81 +1,14 @@
-// web plugin — HTTP API + 控制面板 UI。只用 Node 内置模块（http/fs/os），
-// 无额外运行时依赖（架构对齐电台项目）。
-import { Service } from 'cordis'
-import http from 'node:http'
+// web plugin — HTTP API + 控制面板 UI。基础设施（server 生命周期/cors/json/
+// readJson/serveFile/MIME/lanIP）来自 @relay/core/web-base，这里只写路由。
 import fs from 'node:fs'
 import path from 'node:path'
-import os from 'node:os'
 import { fileURLToPath } from 'node:url'
+import { WebBase, lanIP } from '@relay/core/src/web-base.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PUBLIC = path.resolve(__dirname, '..', '..', 'public')
 
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2',
-}
-
-// 局域网 IPv4（面板/播放链接用；没有则回退 127.0.0.1）
-function lanIP() {
-  for (const list of Object.values(os.networkInterfaces())) {
-    for (const i of list || []) {
-      if (i.family === 'IPv4' && !i.internal) return i.address
-    }
-  }
-  return '127.0.0.1'
-}
-
-class WebService extends Service {
-  constructor(ctx) {
-    super(ctx, 'web')
-    this.server = null
-    ctx.on('ready', () => this.start())
-    ctx.on('dispose', () => {
-      if (this.server) {
-        try { this.server.close() } catch { /* ignore */ }
-      }
-    })
-  }
-
-  async start() {
-    const server = http.createServer((req, res) => this.handle(req, res))
-    this.server = server
-    const { port, host } = this.ctx.config
-    await new Promise((resolve) => server.listen(port, host, resolve))
-    this.ctx.logger.info(`control panel: http://${host === '0.0.0.0' ? 'localhost' : host}:${port}`)
-  }
-
-  cors(res) {
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-  }
-
-  json(res, code, obj) {
-    const body = JSON.stringify(obj)
-    res.writeHead(code, {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-    })
-    res.end(body)
-  }
-
-  async readJson(req) {
-    return new Promise((resolve) => {
-      let data = ''
-      req.on('data', (c) => { data += c; if (data.length > 1e6) req.destroy() })
-      req.on('end', () => {
-        try { resolve(JSON.parse(data || '{}')) } catch { resolve({}) }
-      })
-    })
-  }
-
+class WebService extends WebBase {
   // 所有可用的观看地址（局域网 IP 优先）
   shareUrls() {
     const c = this.ctx.config
@@ -270,20 +203,9 @@ class WebService extends Service {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' })
     res.end('not found')
   }
-
-  serveFile(res, filePath, ext) {
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404)
-        return res.end('not found')
-      }
-      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' })
-      res.end(data)
-    })
-  }
 }
 
-WebService.inject = ['config', 'station', 'streamer', 'recorder', 'presets', 'logfile', 'mediamtx', 'channels', 'resolver']
+WebService.inject = [...WebBase.inject, 'station', 'streamer', 'recorder', 'presets', 'logfile', 'mediamtx', 'channels', 'resolver']
 
 export default function webPlugin(ctx) {
   ctx.plugin(WebService)

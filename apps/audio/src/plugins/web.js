@@ -1,11 +1,11 @@
-// web plugin — HTTP API + control-panel UI. Uses only Node built-ins
-// (http/fs) so there are no extra runtime dependencies.
-import { Service } from 'cordis'
-import http from 'node:http'
+// web plugin — HTTP API + 控制面板 + 媒体直发。基础设施（server 生命周期/
+// cors/json/readJson/serveFile/MIME）来自 @relay/core/web-base，这里保留
+// ICY 注入、媒体路由与空闲态兜底。
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
+import { WebBase, MIME } from '@relay/core/src/web-base.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PUBLIC = path.resolve(__dirname, '..', '..', 'public')
@@ -50,60 +50,7 @@ function icyInjector(res, getTitle, metaint = ICY_METAINT) {
   }
 }
 
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.m3u8': 'application/vnd.apple.mpegurl',
-  '.ts': 'video/MP2T',
-  '.json': 'application/json; charset=utf-8',
-}
-
-class WebService extends Service {
-  constructor(ctx) {
-    super(ctx, 'web')
-    this.server = null
-    ctx.on('ready', () => this.start())
-    ctx.on('dispose', () => {
-      if (this.server) {
-        try { this.server.close() } catch { /* ignore */ }
-      }
-    })
-  }
-
-  async start() {
-    const server = http.createServer((req, res) => this.handle(req, res))
-    this.server = server
-    const { port, host } = this.ctx.config
-    await new Promise((resolve) => server.listen(port, host, resolve))
-    this.ctx.logger.info(`control panel: http://${host}:${port}`)
-  }
-
-  cors(res) {
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-  }
-
-  json(res, code, obj) {
-    const body = JSON.stringify(obj)
-    res.writeHead(code, {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-    })
-    res.end(body)
-  }
-
-  async readJson(req) {
-    return new Promise((resolve) => {
-      let data = ''
-      req.on('data', (c) => { data += c; if (data.length > 1e6) req.destroy() })
-      req.on('end', () => {
-        try { resolve(JSON.parse(data || '{}')) } catch { resolve({}) }
-      })
-    })
-  }
-
+class WebService extends WebBase {
   async handle(req, res) {
     this.cors(res)
     if (req.method === 'OPTIONS') { res.writeHead(204); return res.end() }
@@ -345,20 +292,9 @@ class WebService extends Service {
     // 无 jingle 无 ffmpeg：静音保持连接
     req.on('close', () => { if (!res.writableEnded) res.end() })
   }
-
-  serveFile(res, filePath, ext) {
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404)
-        return res.end('not found')
-      }
-      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' })
-      res.end(data)
-    })
-  }
 }
 
-WebService.inject = ['config', 'station', 'streamer', 'hls', 'browse', 'presets', 'logfile']
+WebService.inject = [...WebBase.inject, 'station', 'streamer', 'hls', 'browse', 'presets', 'logfile']
 
 export default function webPlugin(ctx) {
   ctx.plugin(WebService)

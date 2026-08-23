@@ -42,7 +42,7 @@ test('setRelay 进入转播并发出事件', async () => {
   ctx.station.setRelay('http://a/stream', '台A')
   assert.equal(ctx.station.mode, 'relay')
   assert.equal(ctx.station.activeUrl(), 'http://a/stream')
-  assert.deepEqual(started, { url: 'http://a/stream', name: '台A' })
+  assert.deepEqual(started, { url: 'http://a/stream', name: '台A', transcode: false, record: false })
 })
 
 test('setRelay 多源 failover：主源优先，备用入队', async () => {
