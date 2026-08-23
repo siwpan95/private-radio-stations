@@ -6,7 +6,7 @@ plugins:
   # MUST stay first so ctx.config is available to the services below.
   - id: config
     config:
-      port: !!js "process.env.PORT || 8000"
+      port: !!js "Number(process.env.PORT) || 8000"
       host: 0.0.0.0
       defaultBitrate: 128
       chunkSize: 4096
@@ -28,6 +28,9 @@ plugins:
 
   # Runtime invariants (HARNESS P5): event pairing / data conservation assertions.
   - id: invariants
+
+  # Layered settings service (P9).
+  - id: settings
 
   # Relay state machine (idle <-> relay) with multi-source failover.
   - id: station

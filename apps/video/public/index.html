@@ -80,6 +80,17 @@
       <div class="muted">点击频道即开始转播；同一频道的多个源会自动作为备用源 failover 切换。</div>
     </section>
 
+    <!-- 设置区 -->
+    <section class="card">
+      <h2>⚙️ 设置（运行时可调）</h2>
+      <div class="row opts">
+        <label><input type="checkbox" id="s-transcode"> 默认转码 H.264（新转播默认勾选）</label>
+        <label><input type="checkbox" id="s-record"> 默认同时录像</label>
+        <span class="muted" id="s-status"></span>
+      </div>
+      <div class="muted">保存后立即生效（下一次开始转播时应用）；多端同时编辑会用版本号防冲突。</div>
+    </section>
+
     <!-- 平台解析区 -->
     <section class="card">
       <h2>🛰️ 平台直播解析（real-url）</h2>

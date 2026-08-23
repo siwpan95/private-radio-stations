@@ -75,7 +75,7 @@ if (fs.existsSync(path.join(ROOT, '.git'))) {
 
 if (!fast) {
   console.log('== check: unit tests ==')
-  const suites = ['packages/core/test/loader.test.mjs', 'apps/video/test/station.test.mjs', 'apps/video/test/channels.test.mjs', 'apps/audio/test/station.test.mjs', 'apps/audio/test/presets.test.mjs']
+  const suites = ['packages/core/test/loader.test.mjs', 'packages/core/test/settings.test.mjs', 'apps/video/test/station.test.mjs', 'apps/video/test/channels.test.mjs', 'apps/audio/test/station.test.mjs', 'apps/audio/test/presets.test.mjs']
   const r = run(NODE, ['--test', ...suites])
   if (r.status !== 0) fail('unit tests:\n' + (r.stdout || '') + (r.stderr || ''))
   else console.log('   tests ok')

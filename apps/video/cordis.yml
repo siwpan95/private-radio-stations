@@ -8,7 +8,7 @@ plugins:
   # 必须保持第一个，后面的服务都依赖 ctx.config。
   - id: config
     config:
-      port: !!js "process.env.PORT || 8100"   # 控制面板端口（!!js 表达式，可被环境变量覆盖）
+      port: !!js "Number(process.env.PORT) || 8100"   # 控制面板端口（!!js 表达式，可被环境变量覆盖）
       host: 0.0.0.0
       pathName: live          # MediaMTX 中的转播路径名（rtsp://IP:8554/live 等）
       transcode: false        # 默认不转码（-c copy）；HEVC/AV1 源看不了时改成 true 转 H.264
@@ -35,6 +35,9 @@ plugins:
 
   # 运行时不变量（HARNESS P5）：事件配对 / 数据守恒断言。
   - id: invariants
+
+  # 分层设置服务（P9：schema 默认 → base → 用户文档三层合并）。
+  - id: settings
 
   # MediaMTX 进程托管：启动/退出守护 + 健康探测（:9997 控制 API）。
   - id: mediamtx

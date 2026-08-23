@@ -16,6 +16,17 @@ await start(ctx, {
   root,
   watch: true, // P8A：cordis.patch.yml 热重载
 })
+import Schema from 'schemastery'
+
+// P9：注册可面板编辑的运行时设置命名空间
+ctx.settings.register(
+  'audio.relay',
+  Schema.object({
+    defaultBitrate: Schema.number().min(8).max(512).default(128),
+  }),
+  { base: { defaultBitrate: Number(ctx.config.defaultBitrate) || 128 } }
+)
+
 ctx.logger.info('private-radio-stations (Node.js + Cordis) started')
 
 let shuttingDown = false

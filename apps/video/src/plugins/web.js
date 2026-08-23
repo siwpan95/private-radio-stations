@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { WebBase, lanIP } from '@relay/core/src/web-base.js'
+import { redactSecrets } from '@relay/core/src/settings.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PUBLIC = path.resolve(__dirname, '..', '..', 'public')
@@ -30,7 +31,7 @@ class WebService extends WebBase {
 
     const url = new URL(req.url, `http://${req.headers.host}`)
     const pathname = decodeURIComponent(url.pathname)
-    const { station, streamer, recorder, presets, logfile, mediamtx, channels, resolver } = this.ctx
+    const { station, streamer, recorder, presets, logfile, mediamtx, channels, resolver, settings } = this.ctx
 
     // ---- API ----
     if (pathname === '/api/status') {
@@ -46,6 +47,7 @@ class WebService extends WebBase {
       s.presets = presets.list()
       if (channels) s.channels = { files: channels.files() }
       if (resolver) s.platformCount = resolver.platformsList().length
+      if (settings) s.settings = settings.status()
       return this.json(res, 200, s)
     }
 
@@ -119,6 +121,23 @@ class WebService extends WebBase {
       const u = url.searchParams.get('url') || ''
       const list = presets.remove(u)
       return this.json(res, 200, { presets: list })
+    }
+
+    // ---- 分层设置（P9）----
+    const settingsMatch = pathname.match(/^\/api\/settings\/(.+)$/)
+    if (settingsMatch && req.method === 'GET') {
+      const r = settings.resolve(settingsMatch[1])
+      if (!r) return this.json(res, 404, { error: '未知命名空间' })
+      return this.json(res, 200, { ...r, value: redactSecrets(r.value) })
+    }
+    if (settingsMatch && req.method === 'PUT') {
+      const body = await this.readJson(req)
+      try {
+        const r = settings.set(settingsMatch[1], body.patch, body.expectedRevision)
+        return this.json(res, 200, { ns: r.ns, revision: r.revision, value: redactSecrets(r.value) })
+      } catch (e) {
+        return this.json(res, e.code === 'SETTINGS_CONFLICT' ? 409 : 400, { error: e.message, code: e.code })
+      }
     }
 
     // ---- 频道库（IPTV m3u）----
@@ -205,7 +224,7 @@ class WebService extends WebBase {
   }
 }
 
-WebService.inject = [...WebBase.inject, 'station', 'streamer', 'recorder', 'presets', 'logfile', 'mediamtx', 'channels', 'resolver']
+WebService.inject = [...WebBase.inject, 'station', 'streamer', 'recorder', 'presets', 'logfile', 'mediamtx', 'channels', 'resolver', 'settings']
 
 export default function webPlugin(ctx) {
   ctx.plugin(WebService)

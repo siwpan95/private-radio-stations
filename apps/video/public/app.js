@@ -273,6 +273,38 @@ async function refresh() {
   }
 }
 
+// ===== 设置（P9 分层设置）=====
+let settingsRev = 0
+
+async function loadSettings() {
+  const s = await api('/api/settings/video.relay')
+  if (!s.value) return
+  settingsRev = s.revision
+  $('#s-transcode').checked = !!s.value.defaultTranscode
+  $('#s-record').checked = !!s.value.defaultRecord
+  $('#s-status').textContent = '（rev ' + settingsRev + '）'
+}
+
+async function saveSettings() {
+  const r = await api('/api/settings/video.relay', {
+    method: 'PUT',
+    body: JSON.stringify({
+      patch: {
+        defaultTranscode: $('#s-transcode').checked,
+        defaultRecord: $('#s-record').checked,
+      },
+      expectedRevision: settingsRev,
+    }),
+  })
+  if (r.error) {
+    $('#s-status').textContent = '⚠ ' + r.error
+    await loadSettings()
+  } else {
+    settingsRev = r.revision
+    $('#s-status').textContent = '✅ 已保存（rev ' + settingsRev + '）'
+  }
+}
+
 // ===== 频道库（IPTV m3u）=====
 let channelFile = ''
 let channelSearch = ''
@@ -488,6 +520,9 @@ function bindEvents() {
 
   $('#rs-platform').addEventListener('change', updatePlatformHint)
 
+  $('#s-transcode').addEventListener('change', saveSettings)
+  $('#s-record').addEventListener('change', saveSettings)
+
   $('#resolve-form').addEventListener('submit', async (ev) => {
     ev.preventDefault()
     await doResolve()
@@ -497,5 +532,6 @@ function bindEvents() {
 bindEvents()
 refresh()
 loadPlatforms()
+loadSettings()
 loadChannelFiles().then(() => loadChannels())
 setInterval(refresh, 2000)

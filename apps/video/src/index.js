@@ -16,6 +16,18 @@ await start(ctx, {
   root,
   watch: true, // P8A：cordis.patch.yml 热重载
 })
+import Schema from 'schemastery'
+
+// P9：注册可面板编辑的运行时设置命名空间
+ctx.settings.register(
+  'video.relay',
+  Schema.object({
+    defaultTranscode: Schema.boolean().default(false),
+    defaultRecord: Schema.boolean().default(false),
+  }),
+  { base: { defaultTranscode: !!ctx.config.transcode, defaultRecord: !!ctx.config.record.enabled } }
+)
+
 ctx.logger.info('local-video-relay (Node.js + Cordis + MediaMTX) started')
 
 let shuttingDown = false
