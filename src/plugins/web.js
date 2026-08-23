@@ -110,6 +110,7 @@ class WebService extends Service {
       s.logfile = logfile.status ? logfile.status() : {}
       s.recent_errors = logfile.recentErrors ? logfile.recentErrors() : []
       s.urls = this.shareUrls()
+      s.presets = presets.list()
       if (channels) s.channels = { files: channels.files() }
       if (resolver) s.platformCount = resolver.platformsList().length
       return this.json(res, 200, s)

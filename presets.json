@@ -2,19 +2,103 @@
   {
     "name": "Mux 测试直播流",
     "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-    "desc": "H.264+AAC · 公开 24/7 测试直播源（已验证）",
+    "desc": "H.264 · 海外 24/7 测试源",
     "icon": "🧪"
-  },
-  {
-    "name": "Tears of Steel（电影短片）",
-    "url": "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
-    "desc": "H.264 · HLS 点播（播完即停，已验证）",
-    "icon": "🎬"
   },
   {
     "name": "Mux 高清演示流",
     "url": "https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8",
-    "desc": "H.264 · 高清演示（已验证）",
+    "desc": "H.264 · 海外演示源",
     "icon": "🎞️"
+  },
+  {
+    "name": "Tears of Steel（短片）",
+    "url": "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
+    "desc": "H.264 · 点播（播完即停）",
+    "icon": "🎬"
+  },
+  {
+    "name": "Apple BipBop 基础流",
+    "url": "http://devimages.apple.com/iphone/samples/bipbop/gear1/prog_index.m3u8",
+    "desc": "H.264 · 苹果官方测试流",
+    "icon": "🍎"
+  },
+  {
+    "name": "Apple BipBop fMP4",
+    "url": "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8",
+    "desc": "fMP4 HLS · 实测 1.7x 流畅",
+    "icon": "🍏"
+  },
+  {
+    "name": "CCTV-1 综合",
+    "url": "http://221.7.175.154:8445/tsfile/live/1000_1.m3u8?key=txiptv&playlive=1&authid=0",
+    "desc": "国内 IPTV · 高清",
+    "icon": "📺"
+  },
+  {
+    "name": "CCTV-3 综艺",
+    "url": "http://112.30.73.119:229/tsfile/live/0003_2.m3u8?key=txiptv&playlive=0&authid=0",
+    "desc": "国内 IPTV · 实测 2.6x 流畅",
+    "icon": "📺"
+  },
+  {
+    "name": "CCTV-4 中文国际",
+    "url": "http://bztv.tvbus.cc:8081/cdnlive/cctv4.m3u8",
+    "desc": "国内 IPTV · 高清",
+    "icon": "📺"
+  },
+  {
+    "name": "CCTV-6 电影",
+    "url": "http://112.30.73.119:9901/tsfile/live/0006_2.m3u8?key=txiptv&playlive=0&authid=0",
+    "desc": "国内 IPTV · 实测 2.5x 流畅",
+    "icon": "🎥"
+  },
+  {
+    "name": "CCTV-8 电视剧",
+    "url": "http://74.91.26.218:82/live/cctv8hd.m3u8",
+    "desc": "国内 IPTV · 高清",
+    "icon": "📺"
+  },
+  {
+    "name": "CCTV-13 新闻",
+    "url": "https://event.pull.hebtv.com/jishi/cp1.m3u8",
+    "desc": "河北广电官方 · 实测 3.8x 流畅",
+    "icon": "📰"
+  },
+  {
+    "name": "CCTV-5+ 体育赛事",
+    "url": "http://59.39.89.130:60901/tsfile/live/0016_1.m3u8?key=txiptv&playlive=1&authid=0",
+    "desc": "国内 IPTV · 实测 2.1x 流畅",
+    "icon": "⚽"
+  },
+  {
+    "name": "浙江卫视",
+    "url": "http://ali-xwl.cztv.com/live/channel011080Plxw.m3u8",
+    "desc": "浙江广电官方 · 实测 5.2x 流畅",
+    "icon": "🌏"
+  },
+  {
+    "name": "东方卫视",
+    "url": "https://txmov2.a.kwimgs.com/bs3/video-hls/5219953535631090825_hlsb.m3u8",
+    "desc": "快手官方 CDN · 实测 12.8x 流畅",
+    "icon": "🌏"
+  },
+  {
+    "name": "湖南卫视",
+    "url": "http://222.169.85.8:9901/tsfile/live/0128_1.m3u8?key=txiptv&playlive=1&authid=0",
+    "desc": "国内 IPTV · 实测 1.5x 流畅",
+    "icon": "🌏"
+  },
+  {
+    "name": "北京卫视",
+    "url": "http://111.59.24.227:8181/tsfile/live/0122_1.m3u8?key=txiptv&playlive=1&authid=0",
+    "desc": "国内 IPTV · 实测 1.3x 流畅",
+    "icon": "🌏"
+  },
+  {
+    "name": "山东卫视",
+    "url": "http://107.150.60.122/live/sdwshd.m3u8",
+    "desc": "国内 IPTV · 实测 1.3x 流畅",
+    "icon": "🌏"
   }
 ]
