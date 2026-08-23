@@ -16,7 +16,9 @@
     "check": "node scripts/check.mjs",
     "test": "node --test apps/video/test/*.test.mjs apps/audio/test/*.test.mjs",
     "smoke:radio": "npm run smoke --workspace @relay/radio",
-    "postinstall": "node scripts/install-hooks.mjs"
+    "postinstall": "node scripts/install-hooks.mjs",
+    "check:video": "npm run check --workspace @relay/video",
+    "test:video": "npm test --workspace @relay/video"
   },
   "engines": {
     "node": ">=22"

@@ -2,7 +2,7 @@
 
 一个用 **Node.js + [Cordis](https://cordis.js.org) 插件框架** 实现的轻量级**转播电台**：把任意网络电台（预设 / 手动输入 / 浏览发现 / 备用源 failover）转播出去，任意设备都能收听。
 
-> 本版本**只做转播**：本地歌单、录音、歌词、社群同步、PWA、上传、排程、鉴权等功能**已全部移除**（Python 旧版已归档到 `legacy-python/`）。
+> 本版本**只做转播**：本地歌单、录音、歌词、社群同步、PWA、上传、排程、鉴权等功能**已全部移除**（Python 旧版已归档到 `archived/`）。
 > 转播对象不限于全球电台——可以手动输入任意 `http(s)` 音频流 URL，甚至手动增加备用源。
 
 技术栈从 Python/Flask 整体迁移到 **Node.js + Cordis**（参考 `G:\notpython\deepseek-harness-master` 的 Cordis + yml 部署形态）。`cordis-main.zip` / `paper-main.zip` 为参考源码，已解压归档在 `vendor/cordis/`（运行时走 npm 安装的 `cordis`，不依赖该目录）。
@@ -170,7 +170,7 @@ private-radio-stations-2.0/
   npm_local_mirror.py 本地 npm 镜像代理（修复本机 undici EIDLETIMEOUT，端口 8899）
   gen_start_bat.py   生成 start-radio.bat
   start-radio.bat    一键部署脚本（CRLF/ASCII）
-  legacy-python/     Python 旧版（已归档，仅供对照）
+  archived/     Python 旧版（已归档，仅供对照）
 ```
 
 > `music/`、`recordings/`、`integrations.json` 等为旧版本残留，可忽略或删除；`jingle.mp3` 现在用于空闲态 /stream 的台标音循环，请保留。
