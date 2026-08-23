@@ -211,3 +211,48 @@ footer code { background: var(--card); }
   main { padding: 12px; }
   .player-wrap iframe { height: 240px; }
 }
+
+/* ===== IPTV 频道库 / 平台解析 ===== */
+.channels {
+  margin-top: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
+}
+.channel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 10px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.channel:hover { border-color: var(--accent); }
+.channel.active { border-color: var(--ok); background: rgba(52, 201, 142, 0.08); }
+.channel-body { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.channel-body .chip { flex-shrink: 0; }
+.channel-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+select {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  outline: none;
+}
+select:focus { border-color: var(--accent); }
+#ch-search { flex: 1; min-width: 140px; }
+#rs-room { flex: 1; }
+#rs-result { margin-top: 8px; word-break: break-all; }

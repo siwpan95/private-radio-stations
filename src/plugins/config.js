@@ -63,6 +63,9 @@ const CONFIG_SCHEMA = {
   },
   ffmpegDir: { type: 'string' },
   presetsFile: { type: 'string' },
+  channelsDir: { type: 'string' },
+  liveDir: { type: 'string' },
+  pythonCmd: { type: 'string' },
 }
 
 function validateConfig(value, schema, schemaPath) {
@@ -123,6 +126,9 @@ export default function configPlugin(ctx, config = {}) {
   )
   const ffmpegDir = config.ffmpegDir || 'ffmpeg'
   const presetsFile = path.resolve(ROOT, config.presetsFile || 'presets.json')
+  const channelsDir = config.channelsDir || 'playlists'
+  const liveDir = config.liveDir || 'src/live'
+  const pythonCmd = config.pythonCmd || 'python'
 
   const ffmpeg = detectBinary(ROOT, ffmpegDir, 'ffmpeg')
   const mediamtxExe = detectBinary(ROOT, mediamtx.dir, 'mediamtx')
@@ -152,6 +158,9 @@ export default function configPlugin(ctx, config = {}) {
     },
     ffmpegDir,
     presetsFile,
+    channelsDir,
+    liveDir,
+    pythonCmd,
     root: ROOT,
     version,
     ffmpeg,

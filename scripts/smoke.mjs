@@ -44,6 +44,12 @@ check('ffmpeg found', s0.ffmpeg === true)
 const presets = await api('/api/presets')
 check('presets list', Array.isArray(presets.presets) && presets.presets.length > 0)
 
+const chs = await api('/api/channels?file=cctv.m3u8')
+check('iptv channel library', Array.isArray(chs.playlists) && chs.playlists.length >= 4 && chs.channels.length > 0, 'playlists=' + (chs.playlists || []).length + ' cctv=' + (chs.channels || []).length)
+
+const plats = await api('/api/platforms')
+check('live platforms', Array.isArray(plats.platforms) && plats.platforms.length >= 50, 'count=' + (plats.platforms || []).length)
+
 console.log('-- 开始转播（' + TEST_URL + '）--')
 await api('/api/relay', { method: 'POST', body: JSON.stringify({ url: TEST_URL, name: 'smoke-test', record: true }) })
 

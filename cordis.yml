@@ -23,6 +23,9 @@ plugins:
       apiAddress: 127.0.0.1:9997
     ffmpegDir: ffmpeg
     presetsFile: presets.json
+    channelsDir: playlists   # IPTV m3u 频道库目录
+    liveDir: src/live        # real-url 平台解析器目录
+    pythonCmd: python        # 解析器使用的 Python
 
   # 文件日志 + 内存错误环（data/logs/stream.log，超限截断）。
   logfile: {}
@@ -41,6 +44,12 @@ plugins:
 
   # presets.json 读写（去重 + 原子写）。
   presets: {}
+
+  # IPTV m3u 频道库（playlists/*.m3u8，同频道多源合并为 failover 备用源）。
+  channels: {}
+
+  # 直播平台真实流地址解析（src/live/，real-url 解析器，GPL-2.0）。
+  resolver: {}
 
   # HTTP API + 控制面板 UI。
   web: {}

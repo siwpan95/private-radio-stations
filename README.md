@@ -55,6 +55,20 @@ node src/index.js
 
 面板的「观看」区会自动显示这些地址，并提供网页内嵌预览。
 
+## 📡 IPTV 频道库（m3u）
+
+- 内置央视频道 / 卫视 / 完整 / 付费四份列表（来自 iptv-sources，MIT），见 `playlists/`；
+- 同一频道多源自动合并，转播时第一个为主源、其余为 failover 备用源；
+- 面板「频道库」区：选列表、搜索、点频道即转播；支持从 URL 导入任意 m3u/m3u8 列表；
+- 更新列表：面板导入 `https://cdn.jsdelivr.net/gh/best-fan/iptv-sources@main/cn_all.m3u8` 等。
+
+## 🛰️ 平台直播解析（real-url）
+
+面板「平台直播解析」区输入房间号/频道名，一键获取真实流地址并转播，支持 **59 个平台**
+（斗鱼、虎牙、B站、抖音、快手、YY、网易CC、Twitch、TikTok、央视频、爱奇艺等）。
+解析器位于 `src/live/`（vendored from wbt5/real-url，GPL-2.0，见 `src/live/README-vendor.md`），
+由 `src/plugins/resolver.js` 调用 `resolve.py`。平台接口经常变动，个别模块失效属正常。
+
 ## 🎥 OBS 推流模式（采集卡 / 摄像头 / 屏幕）
 
 - OBS（本机已装 `F:\obs-studio`）→ 设置 → 推流：
@@ -75,6 +89,12 @@ node src/index.js
 | DELETE | `/api/recordings?name=…` | 删除录像 |
 | GET  | `/recordings/<file>` | 下载录像 |
 | GET/POST/DELETE | `/api/presets` | 预设频道读写（POST 传 `{name,url,desc?,icon?}`）|
+| GET  | `/api/channels?file=…` | 频道库（m3u 解析结果，同频道多源合并）|
+| POST | `/api/playlist` | 导入播放列表 `{url,name?}` |
+| DELETE | `/api/playlist?file=…` | 删除播放列表 |
+| GET  | `/api/platforms` | 支持的直播平台列表 |
+| POST | `/api/resolve` | 解析真实流地址 `{platform,room}` |
+| POST | `/api/relay/resolve` | 解析并直接转播 `{platform,room,name?,transcode?,record?}` |
 
 ## ⚙️ 配置（cordis.yml）
 
@@ -113,7 +133,9 @@ Gitee：https://gitee.com/siwpan/private-radio-stations/tree/video/（本项目�
 ```
 G:\tools\video\              ← 项目根（转播站本体）
   cordis.yml / mediamtx.yml / presets.json / package.json / start-stream.bat / README.md
-  src\ plugins\              ← Node 插件（config/mediamtx/station/streamer/recorder/presets/web…）
+  src\ plugins\              ← Node 插件（config/mediamtx/station/streamer/recorder/presets/web/channels/resolver…）
+  src\ live\                  ← real-url 平台解析器（59 平台，GPL-2.0）
+  playlists\                  ← IPTV m3u 频道库（cctv/province/all/pay）
   public\                     ← 控制面板静态页
   scripts\                    ← smoke.mjs（冒烟测试）、dl_mtx.py（MediaMTX 镜像下载）
   ffmpeg\ mediamtx\          ← 运行时二进制（mediamtx\ 内含 MoQ 自动证书）

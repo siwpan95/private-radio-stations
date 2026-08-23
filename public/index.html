@@ -62,6 +62,38 @@
       </div>
     </section>
 
+    <!-- 频道库区 -->
+    <section class="card">
+      <h2>📡 IPTV 频道库</h2>
+      <div class="row">
+        <select id="ch-file"></select>
+        <input id="ch-search" type="text" placeholder="搜索频道名…">
+        <button type="button" class="btn tiny danger" id="ch-del" title="删除当前播放列表">删除列表</button>
+      </div>
+      <div id="channels" class="channels"></div>
+      <h3 class="sub">➕ 导入播放列表（m3u / m3u8）</h3>
+      <form id="playlist-form" class="preset-form">
+        <input id="pl-url" placeholder="列表地址 http(s)://…">
+        <input id="pl-name" placeholder="名称（可选）">
+        <button type="submit" class="btn small">导入</button>
+      </form>
+      <div class="muted">点击频道即开始转播；同一频道的多个源会自动作为备用源 failover 切换。</div>
+    </section>
+
+    <!-- 平台解析区 -->
+    <section class="card">
+      <h2>🛰️ 平台直播解析（real-url）</h2>
+      <form id="resolve-form" class="relay-form">
+        <div class="row">
+          <select id="rs-platform"></select>
+          <input id="rs-room" type="text" placeholder="房间号 / 频道名 / 分享链接">
+          <button type="submit" class="btn primary">🔍 解析并转播</button>
+        </div>
+      </form>
+      <div id="rs-hint" class="muted"></div>
+      <div id="rs-result" class="muted"></div>
+    </section>
+
     <!-- 观看区 -->
     <section class="card">
       <h2>👀 观看</h2>

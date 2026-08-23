@@ -273,6 +273,134 @@ async function refresh() {
   }
 }
 
+// ===== 频道库（IPTV m3u）=====
+let channelFile = ''
+let channelSearch = ''
+let channelCache = []
+
+async function loadChannelFiles() {
+  const s = await api('/api/channels')
+  const sel = $('#ch-file')
+  const cur = channelFile
+  sel.innerHTML = ''
+  for (const p of (s.playlists || [])) {
+    const opt = document.createElement('option')
+    opt.value = p.file
+    opt.textContent = p.file + '（' + p.channels + ' 频道）'
+    sel.append(opt)
+  }
+  if (cur && s.playlists.some((p) => p.file === cur)) channelFile = cur
+  else channelFile = s.playlists.length ? s.playlists[0].file : ''
+  sel.value = channelFile
+}
+
+async function loadChannels() {
+  const s = await api('/api/channels?file=' + encodeURIComponent(channelFile))
+  channelCache = s.channels || []
+  renderChannels()
+}
+
+function renderChannels() {
+  const box = $('#channels')
+  box.innerHTML = ''
+  if (!channelCache.length) {
+    box.innerHTML = '<div class="muted">当前列表没有频道。可导入新的 m3u/m3u8 播放列表。</div>'
+    return
+  }
+  const q = channelSearch.trim().toLowerCase()
+  const list = q ? channelCache.filter((c) => c.name.toLowerCase().includes(q)) : channelCache
+  if (!list.length) {
+    box.innerHTML = '<div class="muted">没有匹配的频道。</div>'
+    return
+  }
+  const activeUrl = state && state.mode === 'relay' && state.current ? state.current.url : null
+  for (const c of list.slice(0, 300)) {
+    const item = document.createElement('div')
+    item.className = 'channel' + (activeUrl && c.urls.includes(activeUrl) ? ' active' : '')
+    const info = document.createElement('div')
+    info.className = 'channel-body'
+    const grp = document.createElement('span')
+    grp.className = 'chip'
+    grp.textContent = c.group || '未分组'
+    const nm = document.createElement('span')
+    nm.className = 'channel-name'
+    nm.textContent = c.name
+    const src = document.createElement('span')
+    src.className = 'muted'
+    src.textContent = c.urls.length + ' 源'
+    info.append(grp, nm, src)
+    info.addEventListener('click', async () => {
+      const t = document.getElementById('r-transcode')
+      const rec = document.getElementById('r-record')
+      await api('/api/relay', {
+        method: 'POST',
+        body: JSON.stringify({ url: c.urls[0], name: c.name, fallbacks: c.urls.slice(1), transcode: t.checked, record: rec.checked }),
+      })
+      refresh()
+    })
+    const btn = document.createElement('button')
+    btn.className = 'btn tiny primary'
+    btn.textContent = '▶'
+    btn.title = '转播（' + c.urls.length + ' 个源，自动切换）'
+    btn.addEventListener('click', async () => {
+      const t = document.getElementById('r-transcode')
+      const rec = document.getElementById('r-record')
+      await api('/api/relay', {
+        method: 'POST',
+        body: JSON.stringify({ url: c.urls[0], name: c.name, fallbacks: c.urls.slice(1), transcode: t.checked, record: rec.checked }),
+      })
+      refresh()
+    })
+    item.append(info, btn)
+    box.append(item)
+  }
+}
+
+// ===== 平台直播解析（real-url）=====
+let platforms = []
+
+async function loadPlatforms() {
+  const s = await api('/api/platforms')
+  platforms = s.platforms || []
+  const sel = $('#rs-platform')
+  sel.innerHTML = ''
+  for (const p of platforms) {
+    const opt = document.createElement('option')
+    opt.value = p.module
+    opt.textContent = p.hot ? '⭐ ' + p.label : p.label
+    sel.append(opt)
+  }
+  updatePlatformHint()
+}
+
+function updatePlatformHint() {
+  const p = platforms.find((x) => x.module === $('#rs-platform').value)
+  const hint = $('#rs-hint')
+  hint.textContent = p
+    ? (p.hint ? '提示：' + p.hint + (p.example ? '（例：' + p.example + '）' : '') : '')
+    : ''
+}
+
+async function doResolve() {
+  const platform = $('#rs-platform').value
+  const room = $('#rs-room').value.trim()
+  const out = $('#rs-result')
+  if (!room) { out.textContent = '请填写房间号/频道名/分享链接'; return }
+  out.textContent = '解析中…'
+  const t = document.getElementById('r-transcode')
+  const rec = document.getElementById('r-record')
+  const r = await api('/api/relay/resolve', {
+    method: 'POST',
+    body: JSON.stringify({ platform, room, transcode: t.checked, record: rec.checked }),
+  })
+  if (r.resolved) {
+    out.textContent = '✅ 已解析并开始转播：' + r.resolved.url
+  } else {
+    out.textContent = '❌ ' + (r.error || '解析失败')
+  }
+  refresh()
+}
+
 function bindEvents() {
   $('#relay-form').addEventListener('submit', async (ev) => {
     ev.preventDefault()
@@ -315,8 +443,59 @@ function bindEvents() {
     $('#p-url').value = ''
     refresh()
   })
+
+  $('#ch-file').addEventListener('change', async () => {
+    channelFile = $('#ch-file').value
+    channelSearch = ''
+    $('#ch-search').value = ''
+    await loadChannels()
+  })
+
+  $('#ch-search').addEventListener('input', () => {
+    channelSearch = $('#ch-search').value
+    renderChannels()
+  })
+
+  $('#ch-del').addEventListener('click', async () => {
+    if (!channelFile) return
+    if (!confirm('删除播放列表 ' + channelFile + '？')) return
+    await api('/api/playlist?file=' + encodeURIComponent(channelFile), { method: 'DELETE' })
+    channelFile = ''
+    await loadChannelFiles()
+    await loadChannels()
+  })
+
+  $('#playlist-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault()
+    const url = $('#pl-url').value.trim()
+    if (!url) { alert('请填写 m3u/m3u8 地址'); return }
+    const r = await api('/api/playlist', {
+      method: 'POST',
+      body: JSON.stringify({ url, name: $('#pl-name').value.trim() }),
+    })
+    if (r.ok) {
+      channelFile = r.file
+      channelSearch = ''
+      $('#ch-search').value = ''
+      $('#pl-url').value = ''
+      $('#pl-name').value = ''
+      await loadChannelFiles()
+      await loadChannels()
+    } else {
+      alert('导入失败：' + (r.error || '未知错误'))
+    }
+  })
+
+  $('#rs-platform').addEventListener('change', updatePlatformHint)
+
+  $('#resolve-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault()
+    await doResolve()
+  })
 }
 
 bindEvents()
 refresh()
+loadPlatforms()
+loadChannelFiles().then(() => loadChannels())
 setInterval(refresh, 2000)

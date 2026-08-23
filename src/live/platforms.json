@@ -1,0 +1,415 @@
+[
+  {
+    "module": "douyu",
+    "label": "斗鱼直播",
+    "example": "9999",
+    "hint": "房间号，如 9999",
+    "hot": true
+  },
+  {
+    "module": "huya",
+    "label": "虎牙直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": true
+  },
+  {
+    "module": "bilibili",
+    "label": "哔哩哔哩直播",
+    "example": "6",
+    "hint": "房间号，如 6",
+    "hot": true
+  },
+  {
+    "module": "douyin",
+    "label": "抖音直播",
+    "example": "",
+    "hint": "直播间分享短链或房间号",
+    "hot": true
+  },
+  {
+    "module": "kuaishou",
+    "label": "快手直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": true
+  },
+  {
+    "module": "yy",
+    "label": "YY直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": true
+  },
+  {
+    "module": "cc",
+    "label": "网易CC直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": true
+  },
+  {
+    "module": "zhanqi",
+    "label": "战旗直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": true
+  },
+  {
+    "module": "twitch",
+    "label": "Twitch",
+    "example": "monstercat",
+    "hint": "频道名，如 monstercat",
+    "hot": true
+  },
+  {
+    "module": "tiktok",
+    "label": "TikTok",
+    "example": "",
+    "hint": "直播间分享链接",
+    "hot": true
+  },
+  {
+    "module": "yangshipin",
+    "label": "央视频",
+    "example": "vid=2000210103&pid=600001859",
+    "hint": "央视频 vid/pid，如 CCTV-1",
+    "hot": true
+  },
+  {
+    "module": "acfun",
+    "label": "AcFun直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": true
+  },
+  {
+    "module": "iqiyi",
+    "label": "爱奇艺直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": true
+  },
+  {
+    "module": "egame",
+    "label": "企鹅电竞",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "huomao",
+    "label": "火猫直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "huajiao",
+    "label": "花椒直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "inke",
+    "label": "映客直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "ixigua",
+    "label": "西瓜直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "now",
+    "label": "NOW直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "kugou",
+    "label": "酷狗直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "laifeng",
+    "label": "来疯直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "youku",
+    "label": "优酷轮播台",
+    "example": "",
+    "hint": "频道号",
+    "hot": false
+  },
+  {
+    "module": "immomo",
+    "label": "陌陌直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "migu",
+    "label": "咪咕体育",
+    "example": "",
+    "hint": "赛事/频道号",
+    "hot": false
+  },
+  {
+    "module": "ppsport",
+    "label": "PP体育",
+    "example": "",
+    "hint": "频道号",
+    "hot": false
+  },
+  {
+    "module": "zhibotv",
+    "label": "腾讯体育",
+    "example": "",
+    "hint": "频道号",
+    "hot": false
+  },
+  {
+    "module": "sports_iqiyi",
+    "label": "爱奇艺体育",
+    "example": "",
+    "hint": "频道号",
+    "hot": false
+  },
+  {
+    "module": "yizhibo",
+    "label": "一直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "longzhu",
+    "label": "龙珠直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "pps",
+    "label": "PPS奇秀",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "173",
+    "label": "六间房",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "17live",
+    "label": "17直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "bigo",
+    "label": "BigoLive",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "look",
+    "label": "网易LOOK直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "qf",
+    "label": "千帆直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "jd",
+    "label": "京东直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "qie",
+    "label": "企鹅体育",
+    "example": "",
+    "hint": "频道号",
+    "hot": false
+  },
+  {
+    "module": "renren",
+    "label": "人人直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "xunlei",
+    "label": "迅雷直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "kk",
+    "label": "KK直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "kuwo",
+    "label": "酷我聚星",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "lehai",
+    "label": "乐嗨直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "showself",
+    "label": "秀色直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "woxiu",
+    "label": "我秀直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "hongle",
+    "label": "红人直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "95xiu",
+    "label": "95秀",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "9xiu",
+    "label": "九秀直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "51lm",
+    "label": "羚萌直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "imifun",
+    "label": "爱米直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "2cq",
+    "label": "2CQ直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "kbs",
+    "label": "KBS（韩）",
+    "example": "",
+    "hint": "频道号",
+    "hot": false
+  },
+  {
+    "module": "tuho",
+    "label": "土蚝直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "v6cn",
+    "label": "V6直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "wali",
+    "label": "小米直播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "yuanbobo",
+    "label": "圆播播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "fengbolive",
+    "label": "新浪疯播",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "maoer",
+    "label": "猫耳FM",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "changyou",
+    "label": "畅秀阁",
+    "example": "",
+    "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "liveu",
+    "label": "LiveU直播",
+    "example": "",
+    "hint": "频道号",
+    "hot": false
+  }
+]

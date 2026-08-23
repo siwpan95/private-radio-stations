@@ -97,7 +97,7 @@ class WebService extends Service {
 
     const url = new URL(req.url, `http://${req.headers.host}`)
     const pathname = decodeURIComponent(url.pathname)
-    const { station, streamer, recorder, presets, logfile, mediamtx } = this.ctx
+    const { station, streamer, recorder, presets, logfile, mediamtx, channels, resolver } = this.ctx
 
     // ---- API ----
     if (pathname === '/api/status') {
@@ -110,6 +110,8 @@ class WebService extends Service {
       s.logfile = logfile.status ? logfile.status() : {}
       s.recent_errors = logfile.recentErrors ? logfile.recentErrors() : []
       s.urls = this.shareUrls()
+      if (channels) s.channels = { files: channels.files() }
+      if (resolver) s.platformCount = resolver.platformsList().length
       return this.json(res, 200, s)
     }
 
@@ -171,6 +173,56 @@ class WebService extends Service {
       return this.json(res, 200, { presets: list })
     }
 
+    // ---- 频道库（IPTV m3u）----
+    if (pathname === '/api/channels' && req.method === 'GET') {
+      const file = url.searchParams.get('file') || ''
+      return this.json(res, 200, {
+        playlists: channels.files(),
+        channels: channels.get(file),
+      })
+    }
+
+    if (pathname === '/api/playlist' && req.method === 'POST') {
+      const body = await this.readJson(req)
+      const r2 = await channels.importFromUrl(body.url, body.name)
+      return this.json(res, r2.ok ? 200 : 400, r2)
+    }
+
+    if (pathname === '/api/playlist' && req.method === 'DELETE') {
+      const file = url.searchParams.get('file') || ''
+      const ok = channels.remove(file)
+      return this.json(res, ok ? 200 : 400, { ok, playlists: channels.files() })
+    }
+
+    // ---- 平台直播解析（real-url）----
+    if (pathname === '/api/platforms' && req.method === 'GET') {
+      return this.json(res, 200, { platforms: resolver.platformsList() })
+    }
+
+    if (pathname === '/api/resolve' && req.method === 'POST') {
+      const body = await this.readJson(req)
+      const r3 = await resolver.resolve(body.platform, body.room)
+      return this.json(res, r3.ok ? 200 : 400, r3)
+    }
+
+    if (pathname === '/api/relay/resolve' && req.method === 'POST') {
+      const body = await this.readJson(req)
+      const meta = resolver.platformsList().find((p) => p.module === body.platform)
+      const r4 = await resolver.resolve(body.platform, body.room)
+      if (!r4.ok) return this.json(res, 400, r4)
+      const cfg = this.ctx.config
+      station.setRelay(
+        r4.url,
+        (body.name || '').trim() || ((meta ? meta.label : body.platform) + ' ' + String(body.room).trim()),
+        [],
+        {
+          transcode: body.transcode !== undefined ? body.transcode === true : cfg.transcode,
+          record: body.record !== undefined ? body.record === true : cfg.record.enabled,
+        }
+      )
+      return this.json(res, 200, { resolved: r4, status: station.status() })
+    }
+
     // ---- 录像文件下载 ----
     const recMatch = pathname.match(/^\/recordings\/(.+)$/)
     if (recMatch && req.method === 'GET') {
@@ -216,7 +268,7 @@ class WebService extends Service {
   }
 }
 
-WebService.inject = ['config', 'station', 'streamer', 'recorder', 'presets', 'logfile', 'mediamtx']
+WebService.inject = ['config', 'station', 'streamer', 'recorder', 'presets', 'logfile', 'mediamtx', 'channels', 'resolver']
 
 export default function webPlugin(ctx) {
   ctx.plugin(WebService)
