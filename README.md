@@ -31,6 +31,17 @@ npm run radio   # 电台面板 http://localhost:8000
 | video | 8100 | RTSP 8554 / HLS 8888 / WebRTC 8889 / RTMP 1935 / 控制 API 9997 |
 | audio | 8000 | /stream、/stream/<k>、/hls/* |
 
+## 开发与门禁
+
+```bash
+npm run check          # 全量门禁：全仓语法 + yml/manifest + 24 项单测（pre-push 自动执行）
+npm test               # 全部单测
+npm run check:video / test:video / check:radio / test:radio   # 单应用
+npm run smoke:video / smoke:radio          # 端到端冒烟（需对应服务在跑）
+```
+
+git hooks（`npm install` 自动安装）：pre-commit = 快速门禁（语法+yml+空白），pre-push = 全量门禁。
+
 ## 文档
 
 - apps/video/README.md — 视频转播站完整说明；

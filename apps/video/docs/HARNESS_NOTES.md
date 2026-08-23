@@ -15,8 +15,8 @@
 
 ## 路线图（按性价比排序）
 
-- 🟢 **P4 标准 schema 库**（中成本）：用 schemastery/zod 替换手写 validateConfig，集中 default 与校验；
-- 🟡 **P5 运行时不变量**（中成本）：station 状态机断言（relay:start/stop 配对、sources FIFO 守恒、failureCount ≤ maxFailures），写一个简版 ctx.invariants 服务；
+- ✅ **P4 标准 schema 库**：已落地——两应用 config 改为 schemastery 声明式 schema（校验+默认值一步到位，错误带 JSON 路径），删除手写校验器；
+- ✅ **P5 运行时不变量**：已落地——core 新增 invariants 服务，station 基类注册 5 条断言（mode 合法/relay 状态一致/FIFO 守恒/failureCount 范围/事件配对），含正负向单测；抓出两个真 bug（cordis Proxy 下私有字段失效、ctx.invariants 需声明 inject）；
 - 🟡 **P6 Entry 行式配置**（中成本）：cordis.yml 从 map 改为 `{ id, name, config, disabled, inject }` 行数组，为 patch/热重载打地基；
 - 🔵 **P7 patch 分层**（中成本，依赖 P6）：出厂 cordis.yml + 用户 cordis.patch.yml 按 id 覆盖，本地改动与升级解耦；
 - 🔵 **P8 配置热重载**（高成本，依赖 P6/P7）：fs.watch + 事务式 update + 失败回滚到「最后已知良好」树；

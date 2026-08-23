@@ -1,5 +1,5 @@
 # Local Video Relay — Cordis plugin registry & configuration
-# 架构参考 D:\private-radio-stations-2.0（Node.js + Cordis + yml 插件式加载）。
+# 与 apps/audio 同源的转播站架构（Node.js + Cordis + yml 插件式加载，公共部分在 packages/core）。
 # 每个 plugins 键对应 src/plugins/<key>.js（默认导出为 Cordis 插件函数），
 # 按声明顺序应用，最后发出 ready 事件（见 src/loader.js）。
 

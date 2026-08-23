@@ -2,7 +2,7 @@
 
 把任意网络视频流（HLS/RTSP/RTMP/HTTP 直链）拉到本地，用 **MediaMTX** 分发成
 RTSP / HLS / WebRTC 三种格式，局域网内任意设备（电脑、手机、电视）都能看。
-架构参考 `D:\private-radio-stations-2.0`（Node.js + Cordis + yml 插件式加载），
+与同仓库 `apps/audio`（电台版）同源的 Node.js + Cordis + yml 插件式架构，公共部分在 `packages/core`，
 电台版转音频 → 本版转视频。
 
 > 定位：**本地观看**（家庭/个人）。带网页控制面板、预设频道、手动 URL、

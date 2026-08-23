@@ -42,17 +42,19 @@
 
 ## 推荐里程碑（每步可独立提交）
 
-| 里程碑 | 内容 | 方案 |
-|--------|------|------|
-| M0 约定统一 | 插件命名/目录、loader.js 对齐、logfile 文件名配置化、/api/status 字段统一 | C |
-| M1 抽共享 helper | ffmpeg-args / 通用 schema 校验器 抽为 lib 模块 | C |
-| M2 monorepo 骨架 | workspaces + packages/core，两应用依赖 @relay/core | B |
-| M3 基类扩展点 | station 基类 + 视频扩展；web 基类 + 各应用路由注册 | B |
-| M4 工程化对齐 | 把音频的 test/check.mjs/git hooks/DEPLOY 推广到视频 | B |
-| M5（可选）面板合一 | 统一面板分页签（仅当确定要一个面板管两种转播）| A |
+| 里程碑 | 内容 | 方案 | 状态 |
+|--------|------|------|------|
+| M0 约定统一 | 插件命名/目录、loader.js 对齐、logfile 文件名配置化、/api/status 字段统一 | C | ✅ 完成（/api/shutdown、logfile.file、loader 完全一致）|
+| M1 抽共享 helper | ffmpeg-args / 配置校验 抽为公共模块 | C | ✅ 完成（packages/core 的 ffmpeg-args；P4 升级为 schemastery）|
+| M2 monorepo 骨架 | workspaces + packages/core，两应用依赖 @relay/core | B | ✅ 完成（提交 b75e9e5 / 2ab6f02）|
+| M3 基类扩展点 | station 基类 + 视频扩展；web 基类 + 各应用路由注册 | B | ✅ 完成（StationBase/WebBase，提交 8c396c2）|
+| M4 工程化对齐 | 把音频的 test/check.mjs/git hooks 推广到视频 | B | ✅ 完成（根门禁 + hooks + video 单测，提交 bacdeee）|
+| M5（可选）面板合一 | 统一面板分页签（仅当确定要一个面板管两种转播）| A | ⏳ 未做（按需再启）|
 
-## 附：音频项目顺手修正项
+> 另有 HARNESS P4（schemastery 配置校验）/ P5（运行时不变量）已在 monorepo 落地，见 HARNESS_NOTES.md。
 
-1. `start-radio.bat` 仍指向旧路径 `D:\private-radio-stations-2.0`，应改为 `G:\tools\audio\private-radio-stations-2.0`；
-2. README 目录说明与实际不一致（`legacy-python/` → `archived/`）；
-3. 视频版可反向吸收：音频的 test/ + check.mjs 门禁、DEPLOY.md 排障习惯。
+## 附：音频项目顺手修正项（状态）
+
+1. ✅ `start-radio.bat` 路径已修复（现指向 monorepo 的 apps/audio）；
+2. ✅ 文档路径引用已对齐（extension README 等）；`legacy-python/` 提及在当前仓库 grep 无残留；
+3. ✅ 视频版已吸收音频的 test/ + check.mjs 门禁（根 scripts/check.mjs + git hooks）。
