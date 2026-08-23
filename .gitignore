@@ -39,8 +39,8 @@ data/
 vendor/cordis/
 # 工具链验证临时目录
 .tooltest/
-# 旧 Python 版（已用 Node.js 替换），不进版本库
-legacy-python/
+# 归档区（旧 Python 版/转播剥离存档/探索稿；只推 archived 分支，不进 3.0 版本库）
+archived/
 
 # ---------- 归档 / 无关内容（保留本地，不进版本库） ----------
 # 参考 Cordis 源码压缩包
