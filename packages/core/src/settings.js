@@ -43,7 +43,21 @@ export class SettingsService extends Service {
     super(ctx, 'settings')
     this.namespaces = new Map(); // ns -> { schema, base }
     const root = (ctx.config && ctx.config.root) || process.cwd();
-    this.file = (cfg.file && path.isAbsolute(cfg.file)) ? cfg.file : path.resolve(root, cfg.file || path.join('data', 'settings.json'));
+    this.file = (cfg.file && path.isAbsolute(cfg.file)) ? cfg.file : path.resolve(root, cfg.file || path.join('data', 'settings.json'))
+    // 外部修改监听：文件变更 → 重读并广播 settings:update（P9 验收项）
+    try {
+      let timer = null
+      fs.watch(path.dirname(this.file), (event, filename) => {
+        if (!filename || path.basename(String(filename)) !== path.basename(this.file)) return
+        if (timer) return
+        timer = setTimeout(() => {
+          timer = null
+          const rev = this._readDoc().revision
+          this.ctx.logger.info('[settings] 检测到外部修改 settings.json（rev ' + rev + '）')
+          this.ctx.emit('settings:update', { file: this.file, revision: rev, external: true })
+        }, 300)
+      })
+    } catch { /* 目录尚不存在等，忽略 */ }
   }
 
   register(ns, schema, opts = {}) {
@@ -91,6 +105,7 @@ export class SettingsService extends Service {
     doc.values[ns] = deepMerge(doc.values[ns] || {}, patch || {});
     doc.revision = (doc.revision || 0) + 1;
     this._writeDoc(doc);
+    this.ctx.emit('settings:update', { ns, revision: doc.revision });
     return this.resolve(ns);
   }
 
