@@ -77,6 +77,11 @@ class StreamerService extends Service {
     }
   }
 
+  // P8B 服务 dispose 约定：热卸载时回收全部转码子进程
+  dispose() {
+    this.killAll()
+  }
+
   killAll() {
     for (const c of this.children) {
       try { c.kill('SIGKILL') } catch { /* ignore */ }

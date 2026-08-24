@@ -22,7 +22,7 @@
 - ✅ **P5 运行时不变量**：已落地——core 新增 invariants 服务，station 基类注册 5 条断言（mode 合法/relay 状态一致/FIFO 守恒/failureCount 范围/事件配对），含正负向单测；抓出两个真 bug（cordis Proxy 下私有字段失效、ctx.invariants 需声明 inject）；
 - 🟡 **P6 Entry 行式配置**（中成本）：cordis.yml 从 map 改为 `{ id, name, config, disabled, inject }` 行数组，为 patch/热重载打地基；
 - 🔵 **P7 patch 分层**（中成本，依赖 P6）：出厂 cordis.yml + 用户 cordis.patch.yml 按 id 覆盖，本地改动与升级解耦；
-- 🔵 **P8 配置热重载**（高成本，依赖 P6/P7）：fs.watch + 事务式 update + 失败回滚到「最后已知良好」树；
+- ✅ **P8 配置热重载**：已落地（阶段A 白名单事件 + 阶段B 级联闭包全量事务重载，见 ROADMAP_CONFIG.md）；
 - ⚪ **P9 分层设置服务**：仅当要让面板运行时写配置才值得（schema + revision 乐观锁 + 脱敏）；
 - ⚪ **P10a 隔离 realm（ctx.isolate）**：单实例转播站收益趋近于零，不做。
 

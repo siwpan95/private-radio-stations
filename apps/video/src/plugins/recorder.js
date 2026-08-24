@@ -83,6 +83,12 @@ class RecorderService extends Service {
     })
   }
 
+  // P8B 服务 dispose 约定：热卸载时停掉 ffmpeg 子进程
+  dispose() {
+    this.disposed = true
+    this.stop()
+  }
+
   stop() {
     this.stopping = true // 主动停止不触发 exit 重试
     if (this.child) {

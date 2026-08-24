@@ -154,7 +154,9 @@ export async function start(ctx, opts = {}) {
     const cfg = interpolate(entry.config, scope);
     const fiber = await applyEntry(ctx, entry, cfg, pluginsDir);
     state.fibers.set(entry.id, fiber);
-    state.entries.push({ ...entry, config: cfg });
+    const svc0 = ctx[entry.id]
+    entry.inject = (svc0 && svc0.constructor && svc0.constructor.inject) || []
+    state.entries.push({ ...entry, config: cfg, rawConfig: entry.config });
   }
 
   // 核对同名 Service 是否注册（缺 inject 的依赖会在这里点名）
@@ -233,81 +235,170 @@ export function diffEntries(prev, next) {
   for (const e of next) {
     const p = prevMap.get(e.id);
     if (!p) continue;
-    if (JSON.stringify(p.config) !== JSON.stringify(e.config) || p.disabled !== e.disabled || (p.module || null) !== (e.module || null)) {
+    const pc = p.rawConfig !== undefined ? p.rawConfig : p.config
+    const nc = e.rawConfig !== undefined ? e.rawConfig : e.config
+    if (JSON.stringify(pc) !== JSON.stringify(nc) || p.disabled !== e.disabled || (p.module || null) !== (e.module || null)) {
       changed.push({ prev: p, next: e });
     }
   }
   return { added, removed, changed };
 }
 
-// P8A 应用 diff（安全子集：hot 行可增删改；config 变更走 config:update 白名单事件）
+// P8B 应用 diff（完整重载 + 依赖级联处理）：
+// cordis 卸载某插件 fiber 会级联注销依赖它的服务（且不调其 dispose 钩子），
+// 因此任何结构变更先计算「受影响闭包」（该插件 + 传递依赖它的所有插件），
+// 逆序调 dispose 钩子 → 卸载 fiber → 按原顺序重应用受影响且仍启用的行。
+export function affectedClosure(entries, rootIds) {
+  const affected = new Set(rootIds)
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const e of entries) {
+      if (affected.has(e.id)) continue
+      if ((e.inject || []).some((dep) => affected.has(dep))) {
+        affected.add(e.id)
+        changed = true
+      }
+    }
+  }
+  return affected
+}
+
 export async function applyDiff(ctx, { next, state, pluginsDir, scope }) {
-  const prev = state.entries;
-  const diff = diffEntries(prev, next);
+  const prev = state.entries
+  const diff = diffEntries(prev, next)
+  const failures = []
+  const prevById = new Map(prev.map((e) => [e.id, e]))
+  const nextById = new Map(next.map((e) => [e.id, e]))
 
-  for (const e of diff.removed) {
-    if (!e.hot) {
-      ctx.logger.warn('[hmr] 拒绝删除非 hot 插件 ' + e.id + '（持有独占资源，需重启）');
-      continue;
-    }
-    const fiber = state.fibers.get(e.id);
-    if (fiber) {
-      try { await fiber.dispose(); } catch (err) { ctx.logger.error('[hmr] 卸载 ' + e.id + ' 失败: ' + err.message); }
-      state.fibers.delete(e.id);
-    }
-    ctx.logger.info('[hmr] 已卸载 ' + e.id);
-  }
-
+  const structuralRoots = []
   for (const { prev: p, next: n } of diff.changed) {
-    if (p.disabled !== n.disabled || (p.module || null) !== (n.module || null)) {
-      if (!(p.hot || n.hot)) {
-        ctx.logger.warn('[hmr] 拒绝重载非 hot 插件 ' + n.id + '（结构变更需重启）');
-        continue;
-      }
-      const fiber = state.fibers.get(n.id);
-      if (fiber) { try { await fiber.dispose(); } catch { /* ignore */ } state.fibers.delete(n.id); }
-      if (n.disabled) { ctx.logger.info('[hmr] 已禁用 ' + n.id); continue; }
-      try {
-        const cfg = interpolate(n.config, scope);
-        const f = await applyEntry(ctx, n, cfg, pluginsDir);
-        state.fibers.set(n.id, f);
-        ctx.logger.info('[hmr] 已重载 ' + n.id);
-      } catch (e) {
-        // 事务式回滚：重新应用旧配置，恢复「最后已知良好」状态
-        ctx.logger.error('[hmr] 重载 ' + n.id + ' 失败，回滚旧配置: ' + e.message);
-        try {
-          const oldCfg = interpolate(p.config, scope);
-          const f = await applyEntry(ctx, p, oldCfg, pluginsDir);
-          state.fibers.set(n.id, f);
-          ctx.logger.info('[hmr] ' + n.id + ' 已回滚到旧配置');
-        } catch (e2) {
-          ctx.logger.error('[hmr] ' + n.id + ' 回滚也失败: ' + e2.message);
-        }
-      }
-      continue;
+    const structural = p.disabled !== n.disabled || (p.module || null) !== (n.module || null)
+    if (structural) structuralRoots.push(p.id)
+  }
+  for (const e of diff.removed) structuralRoots.push(e.id)
+
+  if (structuralRoots.length) {
+    // 受影响闭包：根 + 传递依赖者（按 prev 树的 inject 关系）
+    const affected = affectedClosure(prev, structuralRoots)
+
+    // 1) 逆序释放资源并卸载（先 dispose 钩子，再 fiber）
+    for (const e of [...prev].reverse()) {
+      if (!affected.has(e.id)) continue
+      await disposeEntry(ctx, state, e.id, null)
     }
-    // 纯 config 变更：走 config:update 事件（各服务白名单生效，下一次动作应用）
-    const oldCfg = interpolate(p.config, scope);
-    const newCfg = interpolate(n.config, scope);
-    ctx.emit('config:update', { id: n.id, config: newCfg, previous: oldCfg });
-    ctx.logger.info('[hmr] ' + n.id + ' 配置已热更新（白名单键下一次动作生效）');
+
+    // 2) 重应用受影响且在新树中仍启用的行（按原顺序）。
+    //    依赖在新树中缺失/未注册的行跳过（级联下线的预期状态）。
+    for (const e of prev) {
+      if (!affected.has(e.id)) continue
+      const n = nextById.get(e.id)
+      if (!n || n.disabled) continue
+      const depGone = (e.inject || []).some((dep) => {
+        const de = nextById.get(dep)
+        return de && (de.disabled || !ctx[dep])
+      })
+      if (depGone) {
+        ctx.logger.info('[hmr] ' + e.id + ' 依赖缺失，跳过重应用（预期下线）')
+        continue
+      }
+      if (!(await tryApply(ctx, n, state, pluginsDir, scope, e))) failures.push(e.id)
+    }
   }
 
+  // 3) 纯新增行（与既有树无依赖关系）
   for (const e of diff.added) {
-    if (e.disabled) continue;
-    if (!e.hot) {
-      ctx.logger.warn('[hmr] 拒绝热加载非 hot 插件 ' + e.id + '（需重启）');
-      continue;
-    }
-    try {
-      const cfg = interpolate(e.config, scope);
-      const f = await applyEntry(ctx, e, cfg, pluginsDir);
-      state.fibers.set(e.id, f);
-      ctx.logger.info('[hmr] 已热加载 ' + e.id);
-    } catch (err) {
-      ctx.logger.error('[hmr] 热加载 ' + e.id + ' 失败，已回滚: ' + err.message);
+    if (e.disabled) continue
+    if (!(await tryApply(ctx, e, state, pluginsDir, scope, null))) failures.push(e.id)
+  }
+
+  // 4) 纯 config 变更：白名单事件快速路径（不重启插件）
+  for (const { prev: p, next: n } of diff.changed) {
+    const structural = p.disabled !== n.disabled || (p.module || null) !== (n.module || null)
+    if (structural) continue
+    const oldCfg = interpolate(p.rawConfig !== undefined ? p.rawConfig : p.config, scope)
+    const newCfg = interpolate(n.config, scope)
+    ctx.emit('config:update', { id: n.id, config: newCfg, previous: oldCfg })
+    ctx.logger.info('[hmr] ' + n.id + ' 配置已热更新（白名单键下一次动作生效）')
+  }
+
+  // 5) 依赖图审计：应存在而缺失的服务点名并逆序回滚。
+  //    依赖被禁用/移除导致的下线属预期，不算故障。
+  const nextActive = next.filter((e) => !e.disabled).map((e) => e.id)
+  const missing = nextActive.filter((id) => {
+    if (ctx[id]) return false
+    const e = nextById.get(id)
+    const prevE = prevById.get(id)
+    const inject = (prevE && prevE.inject) || (e && e.inject) || []
+    const depGone = inject.some((dep) => {
+      const de = nextById.get(dep)
+      return de && (de.disabled || !ctx[dep])
+    })
+    return !depGone // 依赖都在而自身缺失 → 真故障
+  })
+  if (missing.length) {
+    ctx.logger.error('[hmr] 审计失败，缺失服务: ' + missing.join(', '))
+    for (const id of [...missing].reverse()) {
+      const prevEntry = prevById.get(id)
+      if (prevEntry && !prevEntry.disabled) {
+        await tryApply(ctx, prevEntry, state, pluginsDir, scope, null, true)
+      }
     }
   }
 
-  state.entries = next.map((e) => ({ ...e, config: interpolate(e.config, scope) }));
+  state.entries = next.map((e) => {
+    // 保留 inject 记录（级联闭包计算依赖它）：优先旧记录，其次当前实例
+    const prevE = prevById.get(e.id)
+    let inject = (prevE && prevE.inject) || e.inject || []
+    if (!inject.length) {
+      const svc = ctx[e.id]
+      if (svc && svc.constructor && svc.constructor.inject) inject = svc.constructor.inject
+    }
+    return { ...e, config: interpolate(e.config, scope), rawConfig: e.config, inject }
+  })
+  if (failures.length) ctx.logger.warn('[hmr] 本次热重载有失败项: ' + failures.join(', '))
+}
+
+// 服务 dispose 约定：cordis 卸载 fiber 不回调服务，由 loader 在卸载前手动调用
+async function disposeEntry(ctx, state, id, logTag) {
+  const svc = ctx[id]
+  if (svc && typeof svc.dispose === 'function') {
+    try { await svc.dispose() } catch (e) { ctx.logger.error('[hmr] ' + id + ' dispose 失败: ' + e.message) }
+  }
+  const fiber = state.fibers.get(id)
+  if (fiber) {
+    try { await fiber.dispose() } catch (e) { ctx.logger.error('[hmr] ' + id + ' fiber dispose 失败: ' + e.message) }
+    state.fibers.delete(id)
+  }
+  if (logTag) ctx.logger.info('[hmr] ' + logTag + ' ' + id)
+}
+
+async function tryApply(ctx, entry, state, pluginsDir, scope, fallbackEntry, silent) {
+  try {
+    const cfg = interpolate(entry.rawConfig !== undefined ? entry.rawConfig : entry.config, scope)
+    const f = await applyEntry(ctx, entry, cfg, pluginsDir)
+    state.fibers.set(entry.id, f)
+    // P8B 启动约定：ready 只在引导时发一次，热应用的实例由 loader 显式 start
+    const svc = ctx[entry.id]
+    if (svc && typeof svc.start === 'function') {
+      await svc.start()
+    }
+    if (svc && svc.constructor && svc.constructor.inject) entry.inject = svc.constructor.inject
+    if (!silent) ctx.logger.info('[hmr] 已热加载 ' + entry.id)
+    return true
+  } catch (e) {
+    ctx.logger.error('[hmr] 应用 ' + entry.id + ' 失败: ' + e.message)
+    if (fallbackEntry && !fallbackEntry.disabled) {
+      ctx.logger.warn('[hmr] 回滚 ' + entry.id + ' 到旧配置')
+      try {
+        const cfg = interpolate(fallbackEntry.rawConfig !== undefined ? fallbackEntry.rawConfig : fallbackEntry.config, scope)
+        const f = await applyEntry(ctx, fallbackEntry, cfg, pluginsDir)
+        state.fibers.set(entry.id, f)
+        ctx.logger.info('[hmr] ' + entry.id + ' 已回滚')
+      } catch (e2) {
+        ctx.logger.error('[hmr] ' + entry.id + ' 回滚也失败: ' + e2.message)
+      }
+    }
+    return false
+  }
 }

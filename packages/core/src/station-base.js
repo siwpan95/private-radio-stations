@@ -138,6 +138,11 @@ export class StationBase extends Service {
     if (this.ctx.invariants) this.ctx.invariants.run(tag)
   }
 
+  // P8B 服务 dispose 约定：热卸载前停掉进行中的转播
+  dispose() {
+    this.stopRelay()
+  }
+
   activeUrl() {
     return this.mode === 'relay' && this.current ? this.current.url : null
   }

@@ -148,6 +148,12 @@ class StreamerService extends Service {
     return args
   }
 
+  // P8B 服务 dispose 约定：热卸载时停掉 ffmpeg 子进程
+  dispose() {
+    this.disposed = true
+    this.stop()
+  }
+
   stop() {
     if (this.retryTimer) {
       clearTimeout(this.retryTimer)

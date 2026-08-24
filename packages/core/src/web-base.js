@@ -46,6 +46,11 @@ export class WebBase extends Service {
     this.ctx.logger.info(`control panel: http://${host === '0.0.0.0' ? 'localhost' : host}:${port}`)
   }
 
+  // P8B 服务 dispose 约定：fiber 热卸载时释放端口
+  dispose() {
+    this.close()
+  }
+
   close() {
     if (this.server) {
       try { this.server.close() } catch { /* ignore */ }

@@ -88,6 +88,12 @@ class MediamtxService extends Service {
     this.ctx.logger.info('mediamtx starting (rtsp :8554, hls :8888, webrtc :8889, api :9997)')
   }
 
+  // P8B 服务 dispose 约定：热卸载时停掉 MediaMTX 进程
+  dispose() {
+    this.disposed = true
+    this.stop()
+  }
+
   stop() {
     if (this.child) {
       try { this.child.kill('SIGKILL') } catch { /* ignore */ }

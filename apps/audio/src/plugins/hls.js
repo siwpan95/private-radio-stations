@@ -87,6 +87,11 @@ class HlsService extends Service {
     return { running: !!this.child, latest_segment_age_s: latestSegAge, segments }
   }
 
+  // P8B 服务 dispose 约定：热卸载时停掉切片进程
+  dispose() {
+    this.stop()
+  }
+
   stop() {
     if (this.child) {
       try { this.child.kill('SIGKILL') } catch { /* ignore */ }
