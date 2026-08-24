@@ -22,4 +22,4 @@ npm workspaces：packages/core（loader/config-validate/ffmpeg-args/logfile/pres
 ## 已知陷阱
 - 媒体模型差异：视频=推送型（MediaMTX），音频=拉取型（Node http 直发）——不要尝试单进程共面板
 - ffmpeg/mediamtx 二进制不入版本库
-- apps/video/docs/ 有 MERGE_PLAN / HARNESS_NOTES（借鉴 dsh 的装配纪律笔记），改动架构前先读
+- docs/ 有 MERGE_PLAN / HARNESS_NOTES（借鉴 dsh 的装配纪律笔记），改动架构前先读

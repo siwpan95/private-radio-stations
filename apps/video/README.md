@@ -132,9 +132,11 @@ Gitee：https://gitee.com/siwpan/private-radio-stations/tree/video/（本项目�
 - 换源/停止后，正在观看的播放器需要手动重连（协议特性）。
 ## 📚 文档索引
 
-- `docs/MERGE_PLAN.md` — 与音频电台项目（G:\tools\audio）的合并可行性分析与里程碑；
-- `docs/HARNESS_NOTES.md` — 借鉴 deepseek-harness 插件架构的落地清单与路线图；
-- `docs/NETWORK.md` — 本机实测的镜像/网络增强指南（GitHub 镜像、npm/pip 源、列表更新工具）。
+- `../docs/MERGE_PLAN.md` — 与音频电台项目的合并可行性分析与里程碑；
+- `../docs/HARNESS_NOTES.md` — 借鉴 deepseek-harness 插件架构的落地清单与路线图；
+- `../docs/NETWORK.md` — 本机实测的镜像/网络增强指南（GitHub 镜像、npm/pip 源、列表更新工具）；
+- `../docs/ROADMAP_CONFIG.md` — P6-P9 配置体系演进规划（已全部落地）；
+- `../docs/ROADMAP_PANEL.md` — M5 面板合一与音频面板设置 UI 的调研规划。
 
 ## 📁 目录布局
 

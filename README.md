@@ -46,7 +46,7 @@ git hooks（`npm install` 自动安装）：pre-commit = 快速门禁（语法+y
 
 - apps/video/README.md — 视频转播站完整说明；
 - apps/audio/README.md — 电台完整说明；
-- apps/video/docs/ — 合并方案（MERGE_PLAN）、架构笔记（HARNESS_NOTES）、网络指南（NETWORK）。
+- docs/ — 合并方案（MERGE_PLAN）、架构笔记（HARNESS_NOTES）、网络指南（NETWORK）、配置体系规划（ROADMAP_CONFIG）、面板规划（ROADMAP_PANEL）。
 
 ## 许可
 
