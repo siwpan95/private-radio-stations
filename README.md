@@ -14,8 +14,7 @@ private-radio-stations/
 
 ## 快速开始
 
-W+R
-powershell
+> 提示：按 `W+R` 输入 `powershell` 打开终端再执行下方命令——cmd 的 `cd` 不能跨盘符，PowerShell 无此问题。
 
 ```bash
 cd G:\tools\private-radio-stations
