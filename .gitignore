@@ -3,3 +3,4 @@ node_modules/
 cordis.patch.yml
 *.zip
 .DS_Store
+data/
