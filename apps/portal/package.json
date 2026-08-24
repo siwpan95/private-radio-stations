@@ -1,0 +1,13 @@
+{
+  "name": "@relay/portal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "统一门户：iframe 分页签嵌入视频/音频面板 + 聚合状态卡 + 一键停止",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

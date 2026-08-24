@@ -65,6 +65,15 @@
   </section>
 
   <section class="panel">
+    <h2>⚙️ 设置（运行时可调）</h2>
+    <div class="row" style="align-items:center;">
+      <label style="flex:1;">默认码率 kbps（8-512，下一次转播生效）</label>
+      <input id="setBitrate" type="number" min="8" max="512" style="flex:0 0 110px;" />
+      <span class="hint" id="settingsState">—</span>
+    </div>
+  </section>
+
+  <section class="panel">
     <h2>分享</h2>
     <p class="hint">复制本机地址发给同局域网设备，或配合隧道工具（ngrok / cloudflared）生成公网地址。</p>
     <div class="row">

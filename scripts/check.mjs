@@ -34,7 +34,7 @@ function collectJs(dir) {
 }
 
 console.log('== check: syntax ==')
-for (const dir of ['packages/core/src', 'apps/video/src', 'apps/video/public', 'apps/video/scripts', 'apps/video/test', 'apps/audio/src', 'apps/audio/public', 'apps/audio/scripts', 'apps/audio/test', 'apps/audio/extension']) {
+for (const dir of ['packages/core/src', 'apps/portal/src', 'apps/portal/public', 'apps/video/src', 'apps/video/public', 'apps/video/scripts', 'apps/video/test', 'apps/audio/src', 'apps/audio/public', 'apps/audio/scripts', 'apps/audio/test', 'apps/audio/extension']) {
   const abs = path.join(ROOT, dir)
   if (!fs.existsSync(abs)) continue
   for (const p of collectJs(abs)) {
@@ -57,7 +57,7 @@ for (const yml of ['apps/video/cordis.yml', 'apps/audio/cordis.yml']) {
 }
 
 console.log('== check: package.json ==')
-for (const pj of ['package.json', 'packages/core/package.json', 'apps/video/package.json', 'apps/audio/package.json']) {
+for (const pj of ['package.json', 'packages/core/package.json', 'apps/portal/package.json', 'apps/video/package.json', 'apps/audio/package.json']) {
   try {
     JSON.parse(fs.readFileSync(path.join(ROOT, pj), 'utf8'))
     console.log('   ' + pj + ' ok')

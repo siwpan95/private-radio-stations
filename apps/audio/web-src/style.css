@@ -51,3 +51,6 @@ a.link { color:var(--accent); }
          background:#0b0e13; border:1px solid var(--brd); padding:10px 16px; border-radius:8px;
          opacity:0; transition:opacity .25s; pointer-events:none; }
 .toast.show { opacity:1; }
+/* 设置卡片 */
+#setBitrate { text-align: right; font-variant-numeric: tabular-nums; }
+#settingsState { white-space: nowrap; }

@@ -4,8 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>转播电台 · 控制台</title>
-  <script type="module" crossorigin src="/assets/index-DfPJbn3_.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CjAqlZ78.css">
+  <script type="module" crossorigin src="/assets/index-DCKrJ-gL.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-jcTIkUvI.css">
 </head>
 <body>
 <header>
@@ -63,6 +63,15 @@
       <button id="presetAdd" style="flex:0 0 90px;">添加</button>
     </div>
     <ul class="list" id="presetList" style="margin-top:12px;"></ul>
+  </section>
+
+  <section class="panel">
+    <h2>⚙️ 设置（运行时可调）</h2>
+    <div class="row" style="align-items:center;">
+      <label style="flex:1;">默认码率 kbps（8-512，下一次转播生效）</label>
+      <input id="setBitrate" type="number" min="8" max="512" style="flex:0 0 110px;" />
+      <span class="hint" id="settingsState">—</span>
+    </div>
   </section>
 
   <section class="panel">

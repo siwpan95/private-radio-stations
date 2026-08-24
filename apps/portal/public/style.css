@@ -1,0 +1,47 @@
+:root {
+  --bg: #0f1420; --card: #171e2e; --card2: #1e2740;
+  --fg: #e6ecf7; --muted: #8b97b0; --accent: #4f8cff;
+  --ok: #34c98e; --bad: #f0556a; --border: #2a3450;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+}
+header h1 { font-size: 18px; margin: 0; }
+.muted { color: var(--muted); font-size: 12.5px; }
+main { max-width: 1080px; margin: 0 auto; padding: 16px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+}
+.card.ok { border-color: rgba(52, 201, 142, 0.45); }
+.card.off { border-color: rgba(240, 85, 106, 0.5); }
+.card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.card-title { font-weight: 600; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); }
+.card.ok .dot { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.card-actions { display: flex; gap: 8px; margin-top: 10px; }
+.btn {
+  background: var(--card2); border: 1px solid var(--border); color: var(--fg);
+  padding: 5px 14px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.2); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.danger { color: var(--bad); border-color: rgba(240, 85, 106, 0.5); }
+.tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.tab {
+  background: var(--card2); border: 1px solid var(--border); color: var(--muted);
+  padding: 7px 16px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 13px;
+}
+.tab.active { color: var(--fg); background: var(--card); border-bottom-color: var(--accent); }
+iframe {
+  width: 100%; height: calc(100vh - 300px); min-height: 420px;
+  border: 1px solid var(--border); border-radius: 0 10px 10px 10px; background: #000;
+}
+footer { margin-top: 10px; }

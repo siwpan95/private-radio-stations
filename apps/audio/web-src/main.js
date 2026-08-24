@@ -175,7 +175,43 @@ function draw() {
 }
 $('mainAudio').addEventListener('play', () => { if (!vizOn) { setupViz($('mainAudio')); vizOn = true } ac.resume() })
 
+// ===== 设置（P9 分层设置：防抖自动保存 + 409 乐观回滚）=====
+let settingsRev = 0, settingsTimer = null
+
+async function loadSettings() {
+  try {
+    const s = await api('/api/settings/audio.relay')
+    if (!s.value) return
+    settingsRev = s.revision
+    $('setBitrate').value = s.value.defaultBitrate
+    $('settingsState').textContent = 'rev ' + settingsRev
+  } catch (e) { $('settingsState').textContent = '加载失败' }
+}
+
+async function saveSettings() {
+  const bitrate = Math.min(512, Math.max(8, Number($('setBitrate').value) || 128))
+  $('setBitrate').value = bitrate
+  try {
+    const r = await api('/api/settings/audio.relay', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patch: { defaultBitrate: bitrate }, expectedRevision: settingsRev }),
+    })
+    settingsRev = r.revision
+    $('settingsState').textContent = '✅ 已保存 rev ' + settingsRev
+  } catch (e) {
+    // 409 冲突或失败：提示并重载（乐观回滚）
+    toast('设置冲突或保存失败，已刷新')
+    await loadSettings()
+  }
+}
+
+$('setBitrate').addEventListener('input', () => {
+  $('settingsState').textContent = '保存中…'
+  clearTimeout(settingsTimer)
+  settingsTimer = setTimeout(saveSettings, 400)
+})
+
 // init
 $('shareUrl').value = location.origin
-loadPresets(); refresh()
+loadPresets(); refresh(); loadSettings()
 setInterval(refresh, 5000)

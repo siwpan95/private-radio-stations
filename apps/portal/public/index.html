@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>转播站门户</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>📡 本地转播站</h1>
+  <span class="muted" id="portalMeta"></span>
+</header>
+
+<main>
+  <section class="cards" id="cards"></section>
+
+  <section class="tabs">
+    <button class="tab active" data-tab="video">📺 视频转播</button>
+    <button class="tab" data-tab="audio">📻 电台转播</button>
+  </section>
+  <iframe id="frame" src="" title="面板"></iframe>
+
+  <footer class="muted" id="tips">
+    启动：双击根目录 start-video.bat / start-radio.bat（面板离线时这里会显示状态）。
+  </footer>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>
