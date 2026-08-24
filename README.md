@@ -4,14 +4,16 @@ G:\tools\private-radio-stations —— 视频转播与音频电台的整合仓�
 
 ```
 private-radio-stations/
-├─ packages/core/    公共包：loader（启动审计 + !!js）/ ffmpeg-args / 配置校验
+├─ packages/core/    公共包：loader（启动审计 + !!js + 热重载）/ ffmpeg-args / settings / invariants
+├─ apps/portal/      统一门户 :9000（iframe 分页签嵌入两面板 + 聚合状态卡）
 ├─ apps/video/       视频转播站（ffmpeg → MediaMTX：RTSP/HLS/WebRTC；IPTV 频道库；59 平台解析）
 ├─ apps/audio/       音频电台（Node 直发 MP3/HLS；多码率；全球电台浏览）
-├─ start-video.bat / start-radio.bat / stop-*.bat
-└─ docs/             合并方案 / 架构笔记 / 网络指南
+├─ start/stop-{video,radio,portal}.bat
+└─ docs/             合并方案 / 架构笔记 / 网络指南 / 配置规划 / 面板规划
 ```
 
 ## 快速开始
+
 W+R
 powershell
 
@@ -20,24 +22,28 @@ cd G:\tools\private-radio-stations
 npm install --registry=https://registry.npmmirror.com
 npm run video   # 视频面板 http://localhost:8100
 npm run radio   # 电台面板 http://localhost:8000
+npm run portal  # 统一门户 http://localhost:9000（推荐入口）
 ```
 
-或双击根目录 start-video.bat / start-radio.bat（停止用对应 stop-*.bat）。
+或双击根目录 start-video.bat / start-radio.bat / start-portal.bat（停止用对应 stop-*.bat）。
 
 ## 端口约定
 
 | 应用 | 面板 | 媒体 |
 |------|------|------|
+| portal | 9000 | —（聚合门户）|
 | video | 8100 | RTSP 8554 / HLS 8888 / WebRTC 8889 / RTMP 1935 / 控制 API 9997 |
 | audio | 8000 | /stream、/stream/<k>、/hls/* |
 
 ## 开发与门禁
 
 ```bash
-npm run check          # 全量门禁：全仓语法 + yml/manifest + 24 项单测（pre-push 自动执行）
+npm run check          # 全量门禁：全仓语法 + yml/manifest + 43 项单测（pre-push 自动执行）
 npm test               # 全部单测
 npm run check:video / test:video / check:radio / test:radio   # 单应用
 npm run smoke:video / smoke:radio          # 端到端冒烟（需对应服务在跑）
+node scripts/dump-config.mjs <video|audio>  # 打印生效配置树（base+patch）
+node scripts/update-playlists.mjs           # 镜像链更新 IPTV 频道列表
 ```
 
 git hooks（`npm install` 自动安装）：pre-commit = 快速门禁（语法+yml+空白），pre-push = 全量门禁。
