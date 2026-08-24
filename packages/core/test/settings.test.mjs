@@ -20,7 +20,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
 function makeCtx(dir) {
   const ctx = new Context();
   ctx.plugin(FakeConfig, { root: dir });
-  ctx.plugin(settingsPlugin, {});
+  ctx.plugin(settingsPlugin, { watch: false });
   return ctx;
 }
 

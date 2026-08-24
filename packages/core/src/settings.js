@@ -44,10 +44,13 @@ export class SettingsService extends Service {
     this.namespaces = new Map(); // ns -> { schema, base }
     const root = (ctx.config && ctx.config.root) || process.cwd();
     this.file = (cfg.file && path.isAbsolute(cfg.file)) ? cfg.file : path.resolve(root, cfg.file || path.join('data', 'settings.json'))
-    // 外部修改监听：文件变更 → 重读并广播 settings:update（P9 验收项）
-    try {
-      let timer = null
-      fs.watch(path.dirname(this.file), (event, filename) => {
+    // 外部修改监听：文件变更 → 重读并广播 settings:update（P9 验收项）。
+    // watch: false 可关（单测进程需要，fs.watch 会挂住事件循环）。
+    this._watcher = null
+    if (cfg.watch !== false) {
+      try {
+        let timer = null
+        this._watcher = fs.watch(path.dirname(this.file), (event, filename) => {
         if (!filename || path.basename(String(filename)) !== path.basename(this.file)) return
         if (timer) return
         timer = setTimeout(() => {
@@ -57,7 +60,16 @@ export class SettingsService extends Service {
           this.ctx.emit('settings:update', { file: this.file, revision: rev, external: true })
         }, 300)
       })
-    } catch { /* 目录尚不存在等，忽略 */ }
+      } catch { /* 目录尚不存在等，忽略 */ }
+    }
+  }
+
+  // P8B 服务 dispose 约定：热卸载时关闭 watcher
+  dispose() {
+    if (this._watcher) {
+      try { this._watcher.close() } catch { /* ignore */ }
+      this._watcher = null
+    }
   }
 
   register(ns, schema, opts = {}) {
