@@ -183,3 +183,11 @@ private-radio-stations-2.0/
 - `mms://` 等 legacy 协议 ffmpeg 未必支持；嵌入式设备请选 **http(s) 的 MP3/AAC 直链**。
 - HLS / 多码率依赖 ffmpeg；未安装时这部分不可用，但主 `/stream` 在有网络源时仍可经 Node fetch 回退（稳定性弱于 ffmpeg）。
 - 每个听众独立读取远程流；人数多时建议多实例或前端用 HLS 单源分发。
+
+
+---
+
+## 仓库索引标注（2026-08-25 · siwpan 统一治理）
+
+> 电台现行版（Node.js + Cordis 转播）；本地对应 G:\tools\private-radio-stations。
+> 本标注为发布面统一追加，不改变原有内容。
