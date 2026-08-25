@@ -56,3 +56,11 @@ git hooks（`npm install` 自动安装）：pre-commit = 快速门禁（语法+y
 ## 许可
 
 整体 MIT；apps/video/src/live/（real-url）为 GPL-2.0，见各自 LICENSE。
+
+
+---
+
+## 仓库索引标注（2026-08-25 · siwpan 统一治理）
+
+> Python 电台早期版；现行演进见本仓 3.0 分支（Node.js + Cordis 转播版，本地 G:\tools\private-radio-stations）。
+> 本标注为发布面统一追加，不改变原有内容。
