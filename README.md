@@ -15,3 +15,11 @@
 
 - Python 电台（剥离转播后）：`G:\music\musickit\radio` → gitee `siwpan/music` 分支 `radio`
 - Node.js 转播电台 3.0：`D:\private-radio-stations-2.0` → gitee `siwpan/private-radio-stations` 分支 `3.0`
+
+
+---
+
+## 仓库索引标注（2026-08-25 · siwpan 统一治理）
+
+> 归档合集：python-radio-experiments / python-radio-relay-20260823 / python-radio-v2 历史版本。
+> 本标注为发布面统一追加，不改变原有内容。
