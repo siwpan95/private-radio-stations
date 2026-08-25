@@ -148,3 +148,11 @@ G:\tools\video\              ← 项目根（转播站本体）
 
 > 根目录的两个 mediamtx 压缩包（`mediamtx-release.zip` 与 `mediamtx_v1.20.1_windows_amd64.zip`）
 > 内容完全相同（SHA256 一致），与 `mediamtx\mediamtx.exe` 也是同一版本，可只留一份。
+
+
+---
+
+## 仓库索引标注（2026-08-25 · siwpan 统一治理）
+
+> 本地视频转播站（Node.js + Cordis + MediaMTX）归档；本地备份 G:\tools\_backup\video-20260823。
+> 本标注为发布面统一追加，不改变原有内容。
