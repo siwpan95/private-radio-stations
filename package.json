@@ -1,27 +1,27 @@
 {
   "name": "private-radio-stations",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
-  "type": "module",
-  "description": "Relay-only internet radio station (Node.js + Cordis). Proxies remote audio streams with ffmpeg transcode, multi-bitrate mounts, HLS output, global station browse, and a control panel.",
+  "description": "本地转播站 monorepo：视频转播（ffmpeg + MediaMTX）+ 音频电台（Node 直发）",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "video": "npm start --workspace @relay/video",
+    "radio": "npm start --workspace @relay/radio",
+    "smoke:video": "npm run smoke --workspace @relay/video",
+    "check:radio": "npm run check --workspace @relay/radio",
+    "test:radio": "npm test --workspace @relay/radio",
+    "check": "node scripts/check.mjs",
+    "test": "node --test packages/core/test/*.test.mjs apps/video/test/*.test.mjs apps/audio/test/*.test.mjs",
+    "smoke:radio": "npm run smoke --workspace @relay/radio",
+    "postinstall": "node scripts/install-hooks.mjs",
+    "check:video": "npm run check --workspace @relay/video",
+    "test:video": "npm test --workspace @relay/video",
+    "portal": "cd ..\\..\\platform && npm run portal"
+  },
   "engines": {
     "node": ">=22"
-  },
-  "scripts": {
-    "start": "node src/index.js",
-    "dev": "node src/index.js",
-    "check": "node scripts/check.mjs",
-    "test": "node --test test/station.test.mjs test/presets.test.mjs",
-    "smoke": "node scripts/smoke.mjs",
-    "dev:web": "vite",
-    "build:web": "vite build",
-    "postinstall": "node scripts/install-hooks.mjs && npm run build:web"
-  },
-  "dependencies": {
-    "cordis": "4.0.0-rc.8",
-    "js-yaml": "^4.1.0"
-  },
-  "devDependencies": {
-    "vite": "^7.0.0"
   }
 }
