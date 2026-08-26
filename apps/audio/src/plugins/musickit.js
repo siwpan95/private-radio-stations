@@ -57,6 +57,7 @@ class MusickitService extends Service {
     this.queue = []
     this.current = null
     this._fails = 0
+    if (this._timer) { clearInterval(this._timer); this._timer = null }
   }
 
   setParams(channel, bars) {

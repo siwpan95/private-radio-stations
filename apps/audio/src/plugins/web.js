@@ -107,8 +107,10 @@ class WebService extends WebBase {
       const action = String(body.action || '')
       if (action === 'start') musickit.start(body.channel, body.bars)
       else if (action === 'stop') musickit.stop()
-      else return this.json(res, 400, { error: 'action 需为 start|stop' })
-      return this.json(res, 200, musickit.status())
+      else if (action === 'play') station.playMusickit(body.channel, body.bars)
+      else if (action === 'stop-play') station.stopMusickit()
+      else return this.json(res, 400, { error: 'action 需为 start|stop|play|stop-play' })
+      return this.json(res, 200, { ...musickit.status(), station: station.status() })
     }
     if (pathname === '/api/musickit' && req.method === 'GET') {
       if (!musickit) return this.json(res, 404, { error: 'musickit 插件未启用' })
@@ -159,7 +161,11 @@ class WebService extends WebBase {
     // sure the child is killed when the client disconnects.
     const pipeChild = (child) => {
       child.stdout.pipe(res)
-      child.on('exit', () => { if (!res.writableEnded) res.end() })
+      child.on('exit', (code) => {
+        // S4b：musickit 音源模式下，单曲播完(exit 0) → 轮换下一首
+        if (code === 0 && station._musickit) station.advanceMusickitTrack()
+        if (!res.writableEnded) res.end()
+      })
       req.on('close', () => { try { child.kill('SIGKILL') } catch { /* ignore */ } })
     }
 
@@ -329,7 +335,7 @@ class WebService extends WebBase {
   }
 }
 
-WebService.inject = [...WebBase.inject, 'station', 'streamer', 'hls', 'browse', 'presets', 'logfile', 'settings']
+WebService.inject = [...WebBase.inject, 'station', 'streamer', 'hls', 'browse', 'presets', 'logfile', 'settings', 'musickit']
 
 export default function webPlugin(ctx) {
   ctx.plugin(WebService)

@@ -59,7 +59,7 @@ plugins:
       fusion: false
       releaseSafe: false
       timeoutSec: 600
-      cacheDir: G:\\music\\musickit\\radio\\render_cache
+      cacheDir: G:\\music\\musickit\\data\\render_cache
       keep: 20
       queueDepth: 3
       maxFails: 5
