@@ -32,7 +32,8 @@ for (const c of MANIFEST.components) {
   }
 }
 
-// 黄金值用例（单一真相源 = spec.md；expected:null = informational 用例）
+// 黄金值用例（单一真相源 = spec.md；expected:null = informational 用例；
+// expectDiverged:[] = informational 用例的预期分歧名单，超出预期同样失败）
 const CASES = [
   { name: 'full-gate', cmd: 'check', participants: ['radio-gate'], expected: 0, expectConsensus: true },
   { name: 'fast-gate', cmd: 'fast', participants: ['radio-gate'], expected: 0, expectConsensus: true },
@@ -48,8 +49,14 @@ for (const c of CASES) {
   const { consensus, diverged } = analyzeDivergence(sub)
   const match = c.expected === null ? true : (consensus !== null && JSON.stringify(consensus) === JSON.stringify(c.expected))
   if (c.expectConsensus && (diverged.length || errors.length || !match)) failures++
-  if (diverged.length || (c.expected !== null && !match)) {
-    events.push({ type: 'divergence', case: c.name, consensus, expected: c.expected, diverged, errors: errors.map((r) => r.id + ':' + r.error) })
+  // E4 eval-invariant：informational 用例声明预期分歧名单，超出预期 = 真失败
+  if (!c.expectConsensus && Array.isArray(c.expectDiverged)) {
+    const got = [...diverged].sort().join(',')
+    const want = [...c.expectDiverged].sort().join(',')
+    if (got !== want) failures++
+  }
+  if (diverged.length || errors.length || (c.expected !== null && !match)) {
+    events.push({ type: 'divergence', case: c.name, consensus, expected: c.expected, expectDiverged: c.expectDiverged ?? null, diverged, errors: errors.map((r) => r.id + ':' + r.error) })
   }
   report.push({ c, sub, consensus, diverged, errors, match })
 }
@@ -63,6 +70,18 @@ for (const { c, sub, consensus, diverged, errors, match } of report) {
   lines.push('[' + status + '] ' + c.name + '  expected=' + JSON.stringify(c.expected) + '  consensus=' + JSON.stringify(consensus) + '  ' + vals)
   if (diverged.length) lines.push('        diverged: ' + diverged.join(', '))
   if (errors.length) lines.push('        errors: ' + errors.map((r) => r.id + ': ' + r.error).join(' | '))
+}
+
+// E5 分歧事件订阅链路：异常事件以 JSON-lines 追加到 sink，供 CI/上层订阅与告警
+if (events.length) {
+  const sink = process.env.DIVERGENCE_EVENT_FILE || path.join(ROOT, 'data', 'divergence-events.jsonl')
+  fs.mkdirSync(path.dirname(sink), { recursive: true })
+  const stream = fs.createWriteStream(sink, { flags: 'a' })
+  for (const e of events) {
+    stream.write(JSON.stringify({ ts: new Date().toISOString(), ...e, components: snapshot().map((s) => ({ id: s.id, alive: s.alive })) }) + '\n')
+  }
+  await new Promise((resolve, reject) => stream.end((err) => (err ? reject(err) : resolve())))
+  lines.push('divergence-events: ' + events.length + ' appended -> ' + sink)
 }
 lines.push(failures === 0 ? 'OVERALL: ALL GOLDEN VALUES MATCH' : 'OVERALL: DIVERGENCE DETECTED (' + failures + ')')
 console.log(lines.join('\n'))
