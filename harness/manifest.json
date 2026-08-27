@@ -1,0 +1,22 @@
+{
+  "name": "private-radio-stations",
+  "description": "编排 harness 组件清单（组合即数据：加组件只改本文件；enabled:false = 运行时下架）。",
+  "runtime": {
+    "node": "node",
+    "python": "F:/Python314/python.exe"
+  },
+  "components": [
+    {
+      "id": "radio-gate",
+      "kind": "subprocess",
+      "enabled": true,
+      "cmd": "{node}",
+      "args": [
+        "harness/driver.mjs"
+      ],
+      "cwd": "{root}",
+      "timeout": 400000,
+      "comment": "scripts/check.mjs 全量质量门禁"
+    }
+  ]
+}

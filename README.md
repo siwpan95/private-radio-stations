@@ -66,3 +66,14 @@ git hooks（`npm install` 自动安装）：pre-commit = 快速门禁（语法+y
 
 > Python 电台早期版；现行演进见本仓 3.0 分支（Node.js + Cordis 转播版，本地 G:\tools\private-radio-stations）。
 > 本标注为发布面统一追加，不改变原有内容。
+
+---
+
+## 编排 harness（离线黄金值门禁）
+
+`npm run harness`（= node harness/harness.mjs）——组件清单 harness/manifest.json，契约 harness/spec.md：
+
+- full-gate：scripts/check.mjs 全量门禁（语法 + cordis.yml + 包元数据 + 7 单测套件）→ 黄金值 exit 0
+- fast-gate：--fast 快速门禁（pre-commit 同款）→ 黄金值 exit 0
+
+JSON-lines 子进程协议 + ready 握手 + 逐请求超时；子进程由 port 层登记 effect，退出即 kill（无孤儿进程）；全绿 exit 0，任何分歧/报错 exit 1。无新增端口。在线端到端 smoke（需运行中服务 + ffmpeg + 网络测试源）仍由 npm run smoke:* 手动执行。

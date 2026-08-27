@@ -19,7 +19,8 @@
     "postinstall": "node scripts/install-hooks.mjs",
     "check:video": "npm run check --workspace @relay/video",
     "test:video": "npm test --workspace @relay/video",
-    "portal": "cd ..\\..\\platform && npm run portal"
+    "portal": "cd ..\\..\\platform && npm run portal",
+    "harness": "node harness/harness.mjs"
   },
   "engines": {
     "node": ">=22"
