@@ -1,6 +1,6 @@
 # 📺📻 本地转播站（monorepo）
 
-G:\tools\private-radio-stations —— 视频转播与音频电台的整合仓库（npm workspaces）。
+G:\repos\private-radio-stations —— 视频转播与音频电台的整合仓库（npm workspaces，独立仓 siwpan/private-radio-stations）。
 
 ```
 private-radio-stations/
@@ -17,11 +17,11 @@ private-radio-stations/
 > 提示：按 `W+R` 输入 `powershell` 打开终端再执行下方命令——cmd 的 `cd` 不能跨盘符，PowerShell 无此问题。
 
 ```bash
-cd G:\tools\private-radio-stations
+cd G:\repos\private-radio-stations
 npm install --registry=https://registry.npmmirror.com
 npm run video   # 视频面板 http://localhost:8100
 npm run radio   # 电台面板 http://localhost:8000
-npm run portal  # 统一门户 http://localhost:9000（推荐入口）
+npm run portal  # 统一门户（9000 已不再常驻，见 allin-platform start-platform.bat 按需入口）
 ```
 
 或双击根目录 start-video.bat / start-radio.bat / start-portal.bat（停止用对应 stop-*.bat）。
@@ -62,9 +62,9 @@ git hooks（`npm install` 自动安装）：pre-commit = 快速门禁（语法+y
 
 ---
 
-## 仓库索引标注（2026-08-25 · siwpan 统一治理）
+## 仓库索引标注（2026-08-27 · siwpan 统一治理）
 
-> Python 电台早期版；现行演进见本仓 3.0 分支（Node.js + Cordis 转播版，本地 G:\tools\private-radio-stations）。
+> 本仓现行 master = 整合版（Node.js + Cordis 三簇：portal/video/audio + harness）；3.0 分支 = 转播版 Relay Only；2.0/archived* = 归档。本地对应 G:\repos\private-radio-stations。
 > 本标注为发布面统一追加，不改变原有内容。
 
 ---
