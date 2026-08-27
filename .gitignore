@@ -4,3 +4,4 @@ cordis.patch.yml
 *.zip
 .DS_Store
 data/
+installer/
