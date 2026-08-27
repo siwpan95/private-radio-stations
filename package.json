@@ -19,7 +19,7 @@
     "postinstall": "node scripts/install-hooks.mjs",
     "check:video": "npm run check --workspace @relay/video",
     "test:video": "npm test --workspace @relay/video",
-    "portal": "npm start --workspace @relay/portal"
+    "portal": "cd ..\\..\\platform && npm run portal"
   },
   "engines": {
     "node": ">=22"

@@ -15,5 +15,11 @@
     "name": "清晨音乐台",
     "url": "http://lhttp.qingting.fm/live/4915/64k.mp3",
     "desc": "music pop music"
+  },
+  {
+    "name": "我的电台",
+    "url": "https://clutch-hypnotize-goldsmith.ngrok-free.dev/stream.mp3",
+    "desc": "",
+    "icon": ""
   }
 ]

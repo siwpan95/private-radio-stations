@@ -34,6 +34,8 @@ npm run portal  # 统一门户 http://localhost:9000（推荐入口）
 | video | 8100 | RTSP 8554 / HLS 8888 / WebRTC 8889 / RTMP 1935 / 控制 API 9997 |
 | audio | 8000 | /stream、/stream/<k>、/hls/* |
 
+> 本表与唯一事实源 `G:\docs\md\allin主工作区\端口分配表.md` 同步（2026-08-24 起，新服务先查表再选端口）。
+
 ## 开发与门禁
 
 ```bash
