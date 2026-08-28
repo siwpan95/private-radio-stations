@@ -14,19 +14,19 @@ sys.path.insert(0, HERE)
 
 
 def extract_url(v):
-    """兼容各模块返回：str / dict / list"""
+    """兼容各模块返回：str / dict / list（http/https/rtmp 直链均接受）"""
     if isinstance(v, dict):
         for k in ('url', 'real_url', 'stream_url', 'flv_url', 'hls_url'):
-            if v.get(k) and isinstance(v[k], str) and v[k].startswith('http'):
+            if v.get(k) and isinstance(v[k], str) and v[k].startswith(('http', 'rtmp')):
                 return v[k]
         # bilibili 返回 {线路1: url, ...} 这类结构
         for u in v.values():
-            if isinstance(u, str) and u.startswith('http'):
+            if isinstance(u, str) and u.startswith(('http', 'rtmp')):
                 return u
         return None
     if isinstance(v, (list, tuple)) and v:
         return extract_url(v[0])
-    if isinstance(v, str) and v.startswith('http'):
+    if isinstance(v, str) and v.startswith(('http', 'rtmp')):
         return v
     return None
 
