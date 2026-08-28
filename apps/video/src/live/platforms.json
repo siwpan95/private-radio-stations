@@ -56,6 +56,13 @@
     "hot": true
   },
   {
+    "module": "zhanqi",
+    "label": "战旗直播",
+    "example": "https://www.zhanqi.tv/196525",
+    "hint": "直播间链接或房间号",
+    "hot": true
+  },
+  {
     "module": "tiktok",
     "label": "TikTok",
     "example": "",
@@ -109,6 +116,13 @@
     "label": "酷狗直播",
     "example": "",
     "hint": "房间号",
+    "hot": false
+  },
+  {
+    "module": "longzhu",
+    "label": "龙珠直播",
+    "example": "",
+    "hint": "直播间链接或房间号",
     "hot": false
   },
   {
