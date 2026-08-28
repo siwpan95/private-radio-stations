@@ -105,13 +105,6 @@
     "hot": false
   },
   {
-    "module": "ixigua",
-    "label": "西瓜直播",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
     "module": "kugou",
     "label": "酷狗直播",
     "example": "",
