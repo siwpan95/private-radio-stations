@@ -49,13 +49,6 @@
     "hot": true
   },
   {
-    "module": "zhanqi",
-    "label": "战旗直播",
-    "example": "",
-    "hint": "房间号",
-    "hot": true
-  },
-  {
     "module": "twitch",
     "label": "Twitch",
     "example": "monstercat",
@@ -91,20 +84,6 @@
     "hot": true
   },
   {
-    "module": "egame",
-    "label": "企鹅电竞",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
-    "module": "huomao",
-    "label": "火猫直播",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
     "module": "huajiao",
     "label": "花椒直播",
     "example": "",
@@ -121,13 +100,6 @@
   {
     "module": "ixigua",
     "label": "西瓜直播",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
-    "module": "now",
-    "label": "NOW直播",
     "example": "",
     "hint": "房间号",
     "hot": false
@@ -186,20 +158,6 @@
     "label": "爱奇艺体育",
     "example": "",
     "hint": "频道号",
-    "hot": false
-  },
-  {
-    "module": "yizhibo",
-    "label": "一直播",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
-    "module": "longzhu",
-    "label": "龙珠直播",
-    "example": "",
-    "hint": "房间号",
     "hot": false
   },
   {
@@ -266,13 +224,6 @@
     "hot": false
   },
   {
-    "module": "xunlei",
-    "label": "迅雷直播",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
     "module": "kk",
     "label": "KK直播",
     "example": "",
@@ -310,13 +261,6 @@
   {
     "module": "hongle",
     "label": "红人直播",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
-    "module": "95xiu",
-    "label": "95秀",
     "example": "",
     "hint": "房间号",
     "hot": false
@@ -371,20 +315,6 @@
     "hot": false
   },
   {
-    "module": "wali",
-    "label": "小米直播",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
-    "module": "yuanbobo",
-    "label": "圆播播",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
     "module": "fengbolive",
     "label": "新浪疯播",
     "example": "",
@@ -394,13 +324,6 @@
   {
     "module": "maoer",
     "label": "猫耳FM",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
-    "module": "changyou",
-    "label": "畅秀阁",
     "example": "",
     "hint": "房间号",
     "hot": false
