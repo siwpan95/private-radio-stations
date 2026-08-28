@@ -147,13 +147,6 @@
     "hot": false
   },
   {
-    "module": "ppsport",
-    "label": "PP体育",
-    "example": "",
-    "hint": "频道号",
-    "hot": false
-  },
-  {
     "module": "zhibotv",
     "label": "腾讯体育",
     "example": "",
@@ -261,13 +254,6 @@
   {
     "module": "woxiu",
     "label": "我秀直播",
-    "example": "",
-    "hint": "房间号",
-    "hot": false
-  },
-  {
-    "module": "hongle",
-    "label": "红人直播",
     "example": "",
     "hint": "房间号",
     "hot": false
