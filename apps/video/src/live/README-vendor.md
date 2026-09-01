@@ -15,7 +15,8 @@ LICENSE 见本目录 `LICENSE` 文件）。仅本目录内代码适用 GPL-2.0�
   `ratestream`（execjs 签名）→ 原画 HLS 直链，**txTime 约 2 小时（实测）**；
   兜底 `hlsH5Preview` → 鉴权 m3u8（**txTime 仅约 1 分钟，实测 71s 后 403**，
   只适合立即播放）；旧签名法保留但仅作参考；
-- `resolve.py` / `platforms.json` 为本项目新增。
+- `resolve.py` / `platforms.json` 为本项目新增。`resolve.py` 额外输出可选
+  `expiresAt`（从 URL 的 `txTime`/`expire` 时效参数解析）供 station 自动续播；
 
 依赖：`requests` / `PyExecJS`（需 Node）/ `pycryptodome`，见 `requirements.txt`。
 解析超时 45s；平台接口经常变动，失效的模块属正常现象。

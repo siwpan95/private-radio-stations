@@ -70,6 +70,12 @@ node src/index.js
 解析器位于 `src/live/`（vendored from wbt5/real-url，GPL-2.0，见 `src/live/README-vendor.md`），
 由 `src/plugins/resolver.js` 调用 `resolve.py`。平台接口经常变动，个别模块失效属正常。
 
+**平台源自动续播**：多数平台直链带时效签名（斗鱼约 2 小时、抖音/YY 分钟级）。
+经「平台直播解析」开始的转播由 station 自动续播——解析层从 URL 时效参数提取
+`expiresAt`（`txTime`/`expire`），到期前 30 秒主动重解析换源；解析不出时效的平台
+在断流后自动重解析恢复（换源有约 3 秒中断，HLS/WebRTC 播放器自动重连）。
+房间下播则停止并面板提示。手动 URL/预设/IPTV 源不参与此机制。
+
 ## 🎥 OBS 推流模式（采集卡 / 摄像头 / 屏幕）
 
 - OBS（本机已装 `F:\obs-studio`）→ 设置 → 推流：
@@ -96,7 +102,7 @@ node src/index.js
 | DELETE | `/api/playlist?file=…` | 删除播放列表 |
 | GET  | `/api/platforms` | 支持的直播平台列表 |
 | POST | `/api/resolve` | 解析真实流地址 `{platform,room}` |
-| POST | `/api/relay/resolve` | 解析并直接转播 `{platform,room,name?,transcode?,record?}` |
+| POST | `/api/relay/resolve` | 解析并直接转播 `{platform,room,name?,transcode?,record?}`（平台源自动续播，见下） |
 
 ## ⚙️ 配置（cordis.yml）
 

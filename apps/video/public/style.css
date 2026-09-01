@@ -94,6 +94,8 @@ code {
 }
 .ci-name { font-weight: 600; }
 .ci-url { color: var(--muted); font-size: 12.5px; word-break: break-all; }
+.ci-refresh { color: #2f9e6e; font-size: 12.5px; margin-top: 2px; }
+.ci-refresh:empty { display: none; }
 
 .error-box {
   margin-top: 12px;

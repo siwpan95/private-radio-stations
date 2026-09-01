@@ -52,12 +52,24 @@ function renderChips(s) {
   box.append(chip('运行时长', true, fmtUptime(s.uptime)))
 }
 
+function refreshLine(s) {
+  if (!s.refreshInfo) return ''
+  const cnt = s.refreshCount ? (' · 已续播 ' + s.refreshCount + ' 次') : ''
+  if (s.refreshing) return '🔁 自动续播中…' + cnt
+  if (s.expiresAt) {
+    const mins = Math.max(1, Math.round((s.expiresAt * 1000 - Date.now()) / 60000))
+    return '🔁 平台源 · 约 ' + mins + ' 分钟后自动续播' + cnt
+  }
+  return '🔁 平台源 · 断流自动续播' + cnt
+}
+
 function renderCurrent(s) {
   const box = $('#current-info')
   if (s.mode === 'relay' && s.current) {
     box.classList.remove('hidden')
     box.querySelector('.ci-name').textContent = '正在转播：' + s.current.name + (s.current.transcode ? '（转码 H.264）' : '（原码流）') + (s.current.record ? '（录像中）' : '')
     box.querySelector('.ci-url').textContent = s.current.url + (s.sourceCount > 1 ? '   [备用源 ' + (s.sourceCount - 1) + ' 个]' : '')
+    box.querySelector('.ci-refresh').textContent = refreshLine(s)
   } else {
     box.classList.add('hidden')
   }
