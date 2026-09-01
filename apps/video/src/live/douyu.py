@@ -116,11 +116,44 @@ class DouYu:
 
         return res
 
+    def get_ratestream(self):
+        """m 站 ratestream：返回 (code, 完整原画流 URL)。
+
+        txTime 实测约 2 小时（hlsH5Preview 仅约 1 分钟），是现行最长效直链。
+        需要 execjs + Node（签名函数内嵌于 m 站页面）。"""
+        result = re.search(r'(function ub98484234.*)\s(var.*)', self.res).group()
+        func_ub9 = re.sub(r'eval.*?;}', 'strc;}', result)
+        js = execjs.compile(func_ub9)
+        res = js.call('ub98484234')
+
+        v = re.search(r'v=(\d+)', res).group(1)
+        rb = DouYu.md5(self.rid + self.did + self.t10 + v)
+
+        func_sign = re.sub(r'return rt;}\);?', 'return rt;}', res)
+        func_sign = func_sign.replace('(function (', 'function sign(')
+        func_sign = func_sign.replace('CryptoJS.MD5(cb).toString()', '"' + rb + '"')
+
+        params = execjs.compile(func_sign).call('sign', self.rid, self.did, self.t10)
+        params += '&ver=219032101&rid={}&rate=-1'.format(self.rid)
+
+        url = 'https://m.douyu.com/api/room/ratestream'
+        res = self.s.post(url, params=params).json()
+        data = res.get('data') or {}
+        return res.get('code'), data.get('url') or ''
+
     def get_real_url(self):
-        """2026-08-30 重写：hlsH5Preview 返回带 txSecret/txTime/token 鉴权的
-        m3u8（rtmp_live 为相对路径，需与 rtmp_url 的 CDN 主机拼接）。
-        旧式 vplay1a/akm-tct 等空 uuid 的 flv 直链已全线失效
-        （实测：vplay1a 连接失败、tx2play1 404、akm-tct/ws-tct 403），不再拼接。"""
+        """2026-08-30 重写：
+        ① 主路线 m 站 ratestream → 原画 HLS 直链（txTime 约 2 小时，实测）；
+        ② 兜底 hlsH5Preview → 鉴权 m3u8（txTime 仅约 1 分钟，实测 71s 后 403，
+           只适合立即播放）；
+        旧式 vplay1a/akm-tct 等空 uuid flv 直链已全线失效，不再拼接。"""
+        try:
+            code, stream = self.get_ratestream()
+            if code == 0 and stream:
+                # ratestream 返回 http，升 https（实测同源可用，规避混合内容拦截）
+                return {"m3u8": stream.replace('http://', 'https://', 1)}
+        except Exception:
+            pass  # 签名失效（官网再换代）→ 走 hlsH5Preview 兜底
         url = 'https://playweb.douyucdn.cn/lapi/live/hlsH5Preview/' + self.rid
         auth = DouYu.md5(self.rid + self.t13)
         headers = {'rid': self.rid, 'time': self.t13, 'auth': auth}
@@ -140,12 +173,7 @@ class DouYu:
                     raise Exception('解析失败：缺少 CDN 主机地址')
                 live = base + '/' + live
             return {"m3u8": live}
-        # 异常错误码回退旧签名法（其正则已随官网换代失效，失败则报真实原因）
-        try:
-            key = self.get_js()
-            return {"flv": "http://vplay1a.douyucdn.cn/live/{}.flv?uuid=".format(key)}
-        except Exception as e:
-            raise Exception('斗鱼解析失败（error=%s）：%s' % (error, str(e)[:200]))
+        raise Exception('斗鱼解析失败：未开播或接口变更')
 
 if __name__ == '__main__':
     r = input('输入斗鱼直播间号：\n')
