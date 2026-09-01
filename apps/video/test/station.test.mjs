@@ -13,6 +13,16 @@ class FakeConfig extends Service {
   }
 }
 
+class FakeResolver extends Service {
+  constructor(ctx) {
+    super(ctx, 'resolver')
+  }
+
+  async resolve() {
+    return { ok: false, error: 'not wired in this test' }
+  }
+}
+
 function makeCtx(cfg = {}) {
   const ctx = new Context()
   ctx.plugin(FakeConfig, {
@@ -25,6 +35,7 @@ function makeCtx(cfg = {}) {
     ...cfg,
   })
   ctx.plugin(invariantsPlugin, {})
+  ctx.plugin(FakeResolver)
   ctx.plugin(stationPlugin)
   return ctx
 }
@@ -126,7 +137,7 @@ test('合法迁移序列不触发不变量失败', async () => {
   ctx.station.noteFailure() // 切源
   ctx.station.stopRelay()
   assert.deepEqual(ctx.invariants.failures, [])
-  assert.equal(ctx.invariants.status().checks, 5)
+  assert.equal(ctx.invariants.status().checks, 6)
 })
 
 test('状态被破坏时（relay 但 current 为空）不变量会报出', async () => {

@@ -185,6 +185,9 @@ class WebService extends WebBase {
         {
           transcode: body.transcode !== undefined ? body.transcode === true : cfg.transcode,
           record: body.record !== undefined ? body.record === true : cfg.record.enabled,
+          // 自动续播：带平台信息 → 到期/断流时 station 自动重解析换源
+          refreshInfo: { platform: body.platform, room: String(body.room).trim() },
+          expiresAt: typeof r4.expiresAt === 'number' ? r4.expiresAt : 0,
         }
       )
       return this.json(res, 200, { resolved: r4, status: station.status() })
