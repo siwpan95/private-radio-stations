@@ -31,6 +31,31 @@ def extract_url(v):
     return None
 
 
+def extract_expires_at(u):
+    """从直链 URL 的时效参数解析过期时间（unix 秒）；解析不出返回 None。
+
+    支持常见两形态：txTime（十六进制，腾讯云式，如斗鱼）与 expire（十进制，
+    如抖音）。供 station 层「到期前主动重解析续播」使用。"""
+    if not u or '?' not in u:
+        return None
+    try:
+        from urllib.parse import parse_qs
+        params = parse_qs(u.split('?', 1)[1])
+    except Exception:
+        return None
+    for key, base in (('txTime', 16), ('expire', 10)):
+        vals = params.get(key) or []
+        if not vals:
+            continue
+        try:
+            ts = int(vals[0], base)
+        except Exception:
+            continue
+        if 10 ** 9 < ts < 10 ** 11:  # 合理范围 2001~5138 年，滤掉脏数据
+            return ts
+    return None
+
+
 def find_entry(mod, room):
     """模块级 get_real_url；没有的话退回第一个含 get_real_url 方法的类（如 douyu）"""
     fn = getattr(mod, 'get_real_url', None)
@@ -57,7 +82,11 @@ def main():
         url = find_entry(mod, room)()
         u = extract_url(url)
         if u:
-            print(json.dumps({'ok': True, 'url': u}, ensure_ascii=True))
+            out = {'ok': True, 'url': u}
+            exp = extract_expires_at(u)
+            if exp:
+                out['expiresAt'] = exp  # 供 station 到期前主动重解析（可选字段）
+            print(json.dumps(out, ensure_ascii=True))
         else:
             print(json.dumps({'ok': False, 'error': '未获取到播放地址（未开播或规则失效）', 'raw': str(url)[:200]}, ensure_ascii=True))
     except Exception as e:
