@@ -117,19 +117,35 @@ class DouYu:
         return res
 
     def get_real_url(self):
-        error, key = self.get_pre()
-        if error == 0:
-            pass
-        elif error == 102:
+        """2026-08-30 重写：hlsH5Preview 返回带 txSecret/txTime/token 鉴权的
+        m3u8（rtmp_live 为相对路径，需与 rtmp_url 的 CDN 主机拼接）。
+        旧式 vplay1a/akm-tct 等空 uuid 的 flv 直链已全线失效
+        （实测：vplay1a 连接失败、tx2play1 404、akm-tct/ws-tct 403），不再拼接。"""
+        url = 'https://playweb.douyucdn.cn/lapi/live/hlsH5Preview/' + self.rid
+        auth = DouYu.md5(self.rid + self.t13)
+        headers = {'rid': self.rid, 'time': self.t13, 'auth': auth}
+        res = self.s.post(url, headers=headers,
+                          data={'rid': self.rid, 'did': self.did}).json()
+        error = res['error']
+        if error == 102:
             raise Exception('房间不存在')
-        elif error == 104:
+        if error == 104:
             raise Exception('房间未开播')
-        else:
+        data = res.get('data') or {}
+        if error == 0 and data.get('rtmp_live'):
+            live = data['rtmp_live']
+            if not live.startswith(('http://', 'https://')):
+                base = (data.get('rtmp_url') or '').rstrip('/')
+                if not base:
+                    raise Exception('解析失败：缺少 CDN 主机地址')
+                live = base + '/' + live
+            return {"m3u8": live}
+        # 异常错误码回退旧签名法（其正则已随官网换代失效，失败则报真实原因）
+        try:
             key = self.get_js()
-        real_url = {}
-        real_url["flv"] = "http://vplay1a.douyucdn.cn/live/{}.flv?uuid=".format(key)
-        real_url["x-p2p"] = "http://tx2play1.douyucdn.cn/live/{}.xs?uuid=".format(key)
-        return real_url
+            return {"flv": "http://vplay1a.douyucdn.cn/live/{}.flv?uuid=".format(key)}
+        except Exception as e:
+            raise Exception('斗鱼解析失败（error=%s）：%s' % (error, str(e)[:200]))
 
 if __name__ == '__main__':
     r = input('输入斗鱼直播间号：\n')
