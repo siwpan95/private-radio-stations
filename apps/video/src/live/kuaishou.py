@@ -5,9 +5,13 @@
 # 更新记录：
 #   2026-08-28 旧规则失效修复：m.gifshow.com/fw/live 端点已换代（SSR 壳不含 liveStream），
 #   改为解析 live.kuaishou.com/u/{id} 页面内嵌 playList；输入增加 URL 归一化。
+#   2026-09-02 风控修复：固定 did cookie 请求触发 SSR 风控（errorType.type=2
+#   「请求过快」，playList 为空假象=未开播误报）。改用「预热会话」打法——
+#   先 GET 首页拿全套 cookie（did/kpf/…）再拉房间页，实测即过；失败自动预热重试一轮。
 
 import json
 import re
+import time
 from urllib.parse import urlparse
 
 import requests
@@ -45,17 +49,34 @@ class KuaiShou:
             return urlparse(rid).path.strip('/').split('/')[-1]
         return rid
 
+    _HEADERS = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                      '(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        'accept-language': 'zh-CN,zh;q=0.9',
+    }
+
+    def _fetch(self, s, warm):
+        if warm:
+            try:
+                s.get('https://live.kuaishou.com/', headers=self._HEADERS, timeout=15)
+            except Exception:
+                pass
+            time.sleep(1.2)
+        return s.get('https://live.kuaishou.com/u/{}'.format(self.rid),
+                     headers=self._HEADERS, timeout=15)
+
     def get_real_url(self):
-        headers = {
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                          '(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-            'accept-language': 'zh-CN,zh;q=0.9',
-            'cookie': 'did=web_d563dca728d28b00336877723e0359ed',
-        }
         with requests.Session() as s:
-            res = s.get('https://live.kuaishou.com/u/{}'.format(self.rid),
-                        headers=headers, timeout=15)
-            m = re.search(r'"representation":(\[[^\]]*\])', res.text)
+            text = None
+            for attempt in (0, 1):
+                text = self._fetch(s, warm=True).text
+                # 风控态：playList 为空且带 errorType「请求过快」——预热重试一轮
+                if '"representation"' in text or '"errorType"' not in text:
+                    break
+                time.sleep(2)
+            if not text:
+                raise Exception('直播间不存在或未开播')
+            m = re.search(r'"representation":(\[[^\]]*\])', text)
             if not m:
                 raise Exception('直播间不存在或未开播')
             reps = json.loads(m.group(1))
