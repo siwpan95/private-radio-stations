@@ -58,7 +58,7 @@ class WebService extends WebBase {
 
     const url = new URL(req.url, `http://${req.headers.host}`)
     const pathname = decodeURIComponent(url.pathname)
-    const { station, streamer, hls, browse, presets, config, logfile, settings, musickit } = this.ctx
+    const { station, streamer, hls, browse, presets, config, logfile, settings, musickit, monitor } = this.ctx
 
     // ---- API ----
     if (pathname === '/api/status') {
@@ -70,6 +70,7 @@ class WebService extends WebBase {
       s.recent_errors = logfile.recentErrors ? logfile.recentErrors() : []
       if (settings) s.settings = settings.status()
       if (musickit) s.musickit = musickit.status()
+      if (monitor) s.monitor = monitor.status()
       return this.json(res, 200, s)
     }
 
@@ -115,6 +116,23 @@ class WebService extends WebBase {
     if (pathname === '/api/musickit' && req.method === 'GET') {
       if (!musickit) return this.json(res, 404, { error: 'musickit 插件未启用' })
       return this.json(res, 200, musickit.status())
+    }
+
+    // ---- 本机监听（P3）：拉起 PluginPlayer 在本机收听本服务的转播 ----
+    if (pathname === '/api/monitor' && req.method === 'GET') {
+      if (!monitor) return this.json(res, 404, { error: 'monitor 插件未启用' })
+      return this.json(res, 200, monitor.status())
+    }
+    if (pathname === '/api/monitor/start' && req.method === 'POST') {
+      if (!monitor) return this.json(res, 404, { error: 'monitor 插件未启用' })
+      const body = await this.readJson(req).catch(() => ({}))
+      const s = await monitor.start(body.mount ? String(body.mount) : undefined)
+      return this.json(res, s.running || s.connected ? 200 : 500, s)
+    }
+    if (pathname === '/api/monitor/stop' && req.method === 'POST') {
+      if (!monitor) return this.json(res, 404, { error: 'monitor 插件未启用' })
+      const s = await monitor.stop()
+      return this.json(res, 200, s)
     }
 
     if (pathname === '/api/browse' && req.method === 'GET') {
@@ -335,7 +353,7 @@ class WebService extends WebBase {
   }
 }
 
-WebService.inject = [...WebBase.inject, 'station', 'streamer', 'hls', 'browse', 'presets', 'logfile', 'settings', 'musickit']
+WebService.inject = [...WebBase.inject, 'station', 'streamer', 'hls', 'browse', 'presets', 'logfile', 'settings', 'musickit', 'monitor']
 
 export default function webPlugin(ctx) {
   ctx.plugin(WebService)

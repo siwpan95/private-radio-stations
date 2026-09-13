@@ -57,7 +57,51 @@ async function refresh() {
       m.appendChild(el)
     })
     if (!currentMount && s.mode === 'relay') selectMount(null)
+
+    // 本机监听（P3：PluginPlayer 收听本服务转播）
+    const mo = s.monitor
+    const ms = $('monitorState')
+    if (!mo) {
+      ms.textContent = '监听插件未启用'
+      $('monitorStart').disabled = true
+      $('monitorStop').disabled = true
+    } else {
+      const on = mo.running && mo.connected
+      $('monitorStart').disabled = on
+      $('monitorStop').disabled = !on
+      if (!on) {
+        ms.textContent = mo.running
+          ? `播放器已启动（PID ${mo.pid}）但控制通道未就绪：${mo.last_error || '…'}`
+          : (mo.exe_exists ? '未启动' : '播放器不存在: ' + mo.exe)
+      } else {
+        ms.textContent =
+          `监听中 · PID ${mo.pid} · ${mo.mount} · ${mo.url}` +
+          (mo.media ? ` · 在播 ${mo.media}` : '') +
+          ` · ${mo.paused ? '暂停' : '播放 ' + (mo.position || 0).toFixed(1) + 's'}` +
+          (mo.last_error ? ' · ' + mo.last_error : '')
+      }
+    }
   } catch (e) { toast('状态刷新失败：' + e.message) }
+}
+
+$('monitorStart').onclick = async () => {
+  try {
+    await api('/api/monitor/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mount: $('monitorMount').value }),
+    })
+    toast('本机监听已启动')
+    await refresh()
+  } catch (e) { toast('监听启动失败：' + e.message); await refresh() }
+}
+
+$('monitorStop').onclick = async () => {
+  try {
+    await api('/api/monitor/stop', { method: 'POST' })
+    toast('监听已停止')
+    await refresh()
+  } catch (e) { toast('监听停止失败：' + e.message) }
 }
 
 function selectMount(k) {

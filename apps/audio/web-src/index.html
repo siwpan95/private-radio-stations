@@ -46,6 +46,23 @@
   </section>
 
   <section class="panel">
+    <h2>🎧 本机监听（PluginPlayer）</h2>
+    <p class="hint">本机拉起 PluginPlayer 收听本服务的转播（无窗口 + 控制通道驱动）。转播开始自动开听、停止自动停。</p>
+    <div class="row" style="align-items:center;">
+      <label style="flex:0 0 auto;">挂载点</label>
+      <select id="monitorMount" style="flex:0 0 160px;">
+        <option value="hls">/hls/live.m3u8（推荐）</option>
+        <option value="stream">/stream</option>
+        <option value="64">/stream/64</option>
+        <option value="320">/stream/320</option>
+      </select>
+      <button id="monitorStart">▶ 开始监听</button>
+      <button id="monitorStop" class="danger" disabled>■ 停止监听</button>
+    </div>
+    <div class="health" id="monitorState" style="margin-top:10px;">—</div>
+  </section>
+
+  <section class="panel">
     <h2>浏览全球电台 (Radio-Browser)</h2>
     <div class="row">
       <input id="browseQuery" placeholder="搜索电台名，如 Jazz / Lofi / 北京" />

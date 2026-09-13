@@ -64,5 +64,16 @@ plugins:
       queueDepth: 3
       maxFails: 5
 
+  # 本机监听（P3）：拉起 PluginPlayer 在本机收听本服务的转播，由面板「本机监听」控制。
+  # 必须在 web 之前注册（web 通过 inject 依赖 monitor）。
+  # exe/port 可用环境变量 PP_EXE / PP_RPC_PORT 覆盖；mount: hls（默认，可靠） | stream | 64 | 320
+  # 为什么默认 hls：/stream 每个客户端都会新起一次 ffmpeg 冷拉源（首帧 5-15s），
+  # 播放器探测窗口内拿不到完整帧必然失败；HLS 读的是 radio 自己的热切片。
+  - id: monitor
+    config:
+      exe: G:\\local\\pluginplayer\\dist\\pluginplayer.exe
+      port: 7911
+      mount: hls
+
   # HTTP API + control-panel UI.
   - id: web

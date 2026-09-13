@@ -49,8 +49,11 @@ try {
 
 console.log('== check: cordis.yml ==')
 try {
-  const yaml = await import('js-yaml')
-  const doc = yaml.load(fs.readFileSync(path.join(ROOT, 'cordis.yml'), 'utf8'))
+  // 必须用运行时的 parseCordisYml（含 !!js 自定义标签的 schema）。
+  // 旧实现是裸 yaml.load（默认 schema），会把 cordis.yml 里合法的
+  // `port: !!js "Number(process.env.PORT) || 8000"` 判成 unknown tag —— 闸门与运行时不一致。
+  const { parseCordisYml } = await import('@relay/core')
+  const doc = parseCordisYml(fs.readFileSync(path.join(ROOT, 'cordis.yml'), 'utf8'))
   if (!doc || typeof doc.plugins !== 'object') throw new Error('missing plugins')
   console.log('   cordis.yml ok (' + Object.keys(doc.plugins).join(', ') + ')')
 } catch (e) {

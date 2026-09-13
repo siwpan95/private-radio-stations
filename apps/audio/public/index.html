@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>转播电台 · 控制台</title>
-  <script type="module" crossorigin src="/assets/index-DCKrJ-gL.js"></script>
+  <script type="module" crossorigin src="/assets/index-DW47xwoo.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-jcTIkUvI.css">
 </head>
 <body>
@@ -44,6 +44,23 @@
       <label>HLS 播放器（/hls/live.m3u8）</label>
       <audio id="hlsAudio" controls preload="none"></audio>
     </div>
+  </section>
+
+  <section class="panel">
+    <h2>🎧 本机监听（PluginPlayer）</h2>
+    <p class="hint">本机拉起 PluginPlayer 收听本服务的转播（无窗口 + 控制通道驱动）。转播开始自动开听、停止自动停。</p>
+    <div class="row" style="align-items:center;">
+      <label style="flex:0 0 auto;">挂载点</label>
+      <select id="monitorMount" style="flex:0 0 160px;">
+        <option value="hls">/hls/live.m3u8（推荐）</option>
+        <option value="stream">/stream</option>
+        <option value="64">/stream/64</option>
+        <option value="320">/stream/320</option>
+      </select>
+      <button id="monitorStart">▶ 开始监听</button>
+      <button id="monitorStop" class="danger" disabled>■ 停止监听</button>
+    </div>
+    <div class="health" id="monitorState" style="margin-top:10px;">—</div>
   </section>
 
   <section class="panel">
