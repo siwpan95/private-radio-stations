@@ -64,8 +64,67 @@ npm run portal  # 统一门户（9000 已不再常驻，见 allin-platform start
 | portal | 9000 | —（聚合门户）|
 | video | 8100 | RTSP 8554 / HLS 8888 / WebRTC 8889 / RTMP 1935 / 控制 API 9997 |
 | audio | 8000 | /stream、/stream/<k>、/hls/* |
+| **localplayer-bridge** | **8787** | `/api/list`（给「轻量播放器」扩展用，见下节）|
 
 > 本表与唯一事实源 `G:\docs\md\allin主工作区\端口分配表.md` 同步（2026-08-24 起，新服务先查表再选端口）。
+
+## 联动：把「轻量播放器」扩展当本项目的播放器
+
+`scripts/localplayer-bridge.mjs` 是一个零依赖的聚合桥，把本项目的媒体源翻译成
+[轻量播放器（Chrome / Edge 扩展）](../localplayer-master)认识的清单契约
+`GET /api/list -> [{name, path, type}]`，于是浏览器扩展可以直接当本项目的音视频播放器用。
+
+```bash
+npm run bridge          # 或双击 start-bridge.bat
+# 清单  http://127.0.0.1:8787/api/list
+# 体检  http://127.0.0.1:8787/api/health
+```
+
+扩展侧无需任何改动（`plugins/radio-stations-source.js` 已内置，priority 15）；
+只需保证两边端口一致，或在扩展的「选项 → 联动桥地址」里改。
+
+### 聚合哪些源
+
+| 源 id | 内容 | 依赖 |
+|---|---|---|
+| `audio.live` | 正在转播的电台（`/stream`，MP3） | audio 在线**且**正在转播 |
+| `audio.hls` | 同一路电台的 HLS | 同上，且 `hls.enabled` |
+| `audio.presets` | 电台预设（直接播放，无需转播） | audio 在线 |
+| `video.hls` | MediaMTX HLS 直播 | MediaMTX 已收到推流 |
+| `video.channels` | IPTV 频道库 | video 在线且有频道文件 |
+| `video.recordings` | 录制回放 | video 在线 |
+
+### 三条设计红线
+
+1. **任一源挂了都不影响别人**：每个源独立超时（`LP_TIMEOUT_MS`，默认 1500ms）、
+   独立 try/catch，挂了就只是不出现在清单里；全挂返回 `[]`，扩展自动回落到自己的本地媒体。
+2. **只做播放，不做控制**：不调用 `/api/relay/start` 等写接口，启停转播仍在各自面板。
+3. **只监听 127.0.0.1**，不往局域网暴露。
+
+### 两个刻意的取舍
+
+- **不列未转播的 `/stream`**：没在转播时那是一条静音占位流，列出来只会让人以为坏了。
+  `/api/health` 里这种情况记为 `empty`（「当前没有」）而不是 `error`（故障）。
+- **不列 `.ts` 录制**：Chromium 无原生 MPEG-TS 解码器。等对端录制改成 mp4/mkv 会自动出现。
+
+### 排查
+
+先看 `/api/health`：源状态三态 `ok` / `empty`（应答了但当前没内容）/ `error`（连不上或超时），
+`error` 带原因。最常见的两类：
+
+- 全是 `fetch failed` → audio / video 应用没起（`npm run radio` / `npm run video`）。
+- `video.hls` 是 `MediaMTX 不可达` → MediaMTX 没起；若是 `empty` 则表示服务在但没在推流。
+
+### 配置
+
+均可用环境变量覆盖：`LP_BRIDGE_PORT`、`LP_AUDIO_BASE`、`LP_VIDEO_BASE`、`LP_MTX_BASE`、
+`LP_MTX_PATH`、`LP_MAX_CHANNELS`、`LP_MAX_PRESETS`、`LP_TIMEOUT_MS`。
+
+测试（起假上游验证聚合与降级，无需任何真实服务在线）：
+
+```bash
+node --test scripts/localplayer-bridge.test.mjs   # 也包含在 npm test 里
+```
 
 ## 开发与门禁
 
