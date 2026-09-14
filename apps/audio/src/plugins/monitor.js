@@ -19,7 +19,8 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const DEFAULT_EXE = 'G:\\local\\pluginplayer\\dist\\pluginplayer.exe'
+// 外部资产（PluginPlayer）不属于本仓库：默认投放在应用根下的 data/pluginplayer/。
+const DEFAULT_EXE = 'data/pluginplayer/dist/pluginplayer.exe'
 
 /** 控制通道客户端：换行分隔 JSON over TCP（协议见 src/core/control.h）。 */
 class Rpc {
@@ -128,7 +129,9 @@ class MonitorService extends Service {
   }
 
   exePath() {
-    return this.cfg.exe || process.env.PP_EXE || DEFAULT_EXE
+    const raw = this.cfg.exe || process.env.PP_EXE || DEFAULT_EXE
+    // 相对路径按应用根解析（与 logfile/hls 等一致），绝对路径原样使用
+    return path.isAbsolute(raw) ? raw : path.resolve(this.ctx.config.root || '.', raw)
   }
 
   rpcPort() {

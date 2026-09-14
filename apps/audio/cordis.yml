@@ -36,8 +36,10 @@ plugins:
   # 必须排在 station 之前：station 的 musickit 音源模式 inject 了本服务。
   - id: musickit
     config:
-      root: G:\\music\\musickit
-      python: F:\\Python314\\python.exe
+      # 外部资产（musickit 渲染器）不属于本仓库：默认指向应用根下 data/ 的投放入口，
+      # 各机器实际位置在 cordis.patch.yml 覆盖（P7 分层）。
+      root: data/musickit
+      python: python
       channel: random
       bars: 32
       format: mp3
@@ -45,7 +47,7 @@ plugins:
       fusion: false
       releaseSafe: false
       timeoutSec: 600
-      cacheDir: G:\\music\\musickit\\data\\render_cache
+      cacheDir: data/musickit/render_cache
       keep: 20
       queueDepth: 3
       maxFails: 5
@@ -72,7 +74,7 @@ plugins:
   # 播放器探测窗口内拿不到完整帧必然失败；HLS 读的是 radio 自己的热切片。
   - id: monitor
     config:
-      exe: G:\\local\\pluginplayer\\dist\\pluginplayer.exe
+      exe: data/pluginplayer/dist/pluginplayer.exe
       port: 7911
       mount: hls
 

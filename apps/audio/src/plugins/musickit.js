@@ -34,7 +34,10 @@ class MusickitService extends Service {
   }
 
   get root() {
-    return this.cfg.root || 'G:\\music\\musickit'
+    // 外部资产（musickit 素材/渲染器）不属于本仓库：默认投放在应用根下的 data/musickit/；
+    // 相对路径按应用根解析（与 logfile/hls 等一致），绝对路径原样使用。
+    const raw = this.cfg.root || path.join('data', 'musickit')
+    return path.isAbsolute(raw) ? raw : path.resolve(this.ctx.config.root || '.', raw)
   }
 
   rendererPath() {
@@ -42,7 +45,8 @@ class MusickitService extends Service {
   }
 
   cacheDir() {
-    return this.cfg.cacheDir || path.join(this.root, 'radio', 'render_cache')
+    const raw = this.cfg.cacheDir || path.join(this.root, 'radio', 'render_cache')
+    return path.isAbsolute(raw) ? raw : path.resolve(this.ctx.config.root || '.', raw)
   }
 
   python() {
