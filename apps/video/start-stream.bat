@@ -2,7 +2,10 @@
 REM Local Video Relay - Node.js launcher
 setlocal
 chcp 65001 >nul
-cd /d "G:\tools\private-radio-stations\apps\video"
+cd /d "%~dp0"
+rem Paths are always relative to this file via %~dp0 - never hardcode a
+rem drive letter. This repo has moved G: -> D: -> C: and every hardcoded
+rem absolute path silently broke on each move.
 
 REM --- already running? (our own instance answers /api/status) ---
 curl -s -o nul -m 2 http://127.0.0.1:8100/api/status
