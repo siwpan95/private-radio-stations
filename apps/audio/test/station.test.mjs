@@ -12,6 +12,19 @@ class FakeConfig extends Service {
   }
 }
 
+// station 的 musickit 音源模式 inject 了 musickit 服务，这里给个最小替身；
+// musickit 模式本身的链路由 station-musickit.test.mjs 覆盖。
+class FakeMusickit extends Service {
+  constructor(ctx) {
+    super(ctx, 'musickit')
+    this.started = false
+  }
+  start() { this.started = true }
+  stop() { this.started = false }
+  advance() { return null }
+  status() { return { active: this.started } }
+}
+
 function makeCtx(cfg = {}) {
   const ctx = new Context()
   ctx.plugin(FakeConfig, {
@@ -22,6 +35,7 @@ function makeCtx(cfg = {}) {
     ...cfg,
   })
   ctx.plugin(invariantsPlugin, {})
+  ctx.plugin(FakeMusickit)
   ctx.plugin(stationPlugin)
   return ctx
 }

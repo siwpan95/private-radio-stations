@@ -72,7 +72,10 @@ class StationService extends StationBase {
   }
 }
 
-StationService.inject = [...StationBase.inject]
+// musickit 音源模式要访问 ctx.musickit；cordis 不允许取未 inject 的服务
+// （报 cannot get property "musickit" without inject），因此显式声明依赖。
+// 对应地 cordis.yml 里 musickit 行必须排在 station 之前。
+StationService.inject = [...StationBase.inject, 'musickit']
 
 export default function stationPlugin(ctx) {
   ctx.plugin(StationService)

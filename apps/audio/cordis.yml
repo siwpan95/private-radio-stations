@@ -32,22 +32,8 @@ plugins:
   # Layered settings service (P9).
   - id: settings
 
-  # Relay state machine (idle <-> relay) with multi-source failover.
-  - id: station
-
-  # Proxies the active source and spawns ffmpeg for per-client transcode mounts.
-  - id: streamer
-
-  # HLS segment slicing via ffmpeg, driven by relay lifecycle events.
-  - id: hls
-
-  # Radio-Browser.info global station search.
-  - id: browse
-
-  # presets.json read/write (dedupe + atomic write).
-  - id: presets
-
   # musickit 随机渲染音源（S4 自 python musickit_source.py 迁移：渲染子进程队列+状态+API）
+  # 必须排在 station 之前：station 的 musickit 音源模式 inject 了本服务。
   - id: musickit
     config:
       root: G:\\music\\musickit
@@ -63,6 +49,21 @@ plugins:
       keep: 20
       queueDepth: 3
       maxFails: 5
+
+  # Relay state machine (idle <-> relay) with multi-source failover.
+  - id: station
+
+  # Proxies the active source and spawns ffmpeg for per-client transcode mounts.
+  - id: streamer
+
+  # HLS segment slicing via ffmpeg, driven by relay lifecycle events.
+  - id: hls
+
+  # Radio-Browser.info global station search.
+  - id: browse
+
+  # presets.json read/write (dedupe + atomic write).
+  - id: presets
 
   # 本机监听（P3）：拉起 PluginPlayer 在本机收听本服务的转播，由面板「本机监听」控制。
   # 必须在 web 之前注册（web 通过 inject 依赖 monitor）。
