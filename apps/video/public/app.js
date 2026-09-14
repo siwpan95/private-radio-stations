@@ -271,9 +271,41 @@ function render(s) {
   renderLinks(s)
   renderPresets(s)
   renderRecordings(s)
+  renderLauncher(s)
   $('#btn-record').textContent = s.recorder.running ? '⏹ 停止录像' : '⏺ 开始录像'
   $('#btn-start').disabled = s.mode === 'relay'
   $('#btn-stop').disabled = s.mode !== 'relay'
+}
+
+function renderLauncher(s) {
+  const lp = s.launcher
+  const st = $('#pp-state')
+  if (!lp || !lp.enabled) {
+    st.textContent = '快捷入口未启用'
+    $('#pp-open').disabled = true
+    $('#pp-only').disabled = true
+    return
+  }
+  $('#pp-exe').textContent = lp.exe
+  const on = lp.running && lp.connected
+  $('#pp-open').disabled = on
+  $('#pp-only').disabled = on
+  $('#pp-quit').disabled = !on
+  $('#pp-play').disabled = !on
+  $('#pp-pause').disabled = !on
+  $('#pp-stop').disabled = !on
+  if (!lp.exe_exists) { st.textContent = '播放器不存在: ' + lp.exe; return }
+  if (!on) {
+    st.textContent = lp.running
+      ? `窗口已启动（PID ${lp.pid}）但控制通道未就绪：${lp.last_error || '…'}`
+      : '未启动'
+  } else {
+    st.textContent =
+      `运行中 · PID ${lp.pid} · 端口 ${lp.rpc_port}` +
+      (lp.media ? ` · 在播 ${lp.media}` : ' · 空闲') +
+      ` · ${lp.paused ? '暂停' : '播放 ' + (lp.position || 0).toFixed(1) + 's'}` +
+      (lp.last_error ? ' · ' + lp.last_error : '')
+  }
 }
 
 async function refresh() {
@@ -538,6 +570,29 @@ function bindEvents() {
   $('#resolve-form').addEventListener('submit', async (ev) => {
     ev.preventDefault()
     await doResolve()
+  })
+
+  // ===== PluginPlayer 快捷入口（前台拉起 + 控制通道）=====
+  $('#pp-open').addEventListener('click', async () => {
+    await api('/api/player/launch', { method: 'POST', body: JSON.stringify({ url: $('#pp-url').value.trim() }) })
+    refresh()
+  })
+  $('#pp-only').addEventListener('click', async () => {
+    await api('/api/player/launch', { method: 'POST', body: JSON.stringify({}) })
+    refresh()
+  })
+  $('#pp-quit').addEventListener('click', async () => {
+    await api('/api/player/quit', { method: 'POST' })
+    refresh()
+  })
+  $('#pp-play').addEventListener('click', async () => {
+    await api('/api/player/control', { method: 'POST', body: JSON.stringify({ action: 'play' }) }); refresh()
+  })
+  $('#pp-pause').addEventListener('click', async () => {
+    await api('/api/player/control', { method: 'POST', body: JSON.stringify({ action: 'pause' }) }); refresh()
+  })
+  $('#pp-stop').addEventListener('click', async () => {
+    await api('/api/player/control', { method: 'POST', body: JSON.stringify({ action: 'stop' }) }); refresh()
   })
 }
 

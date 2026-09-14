@@ -60,5 +60,11 @@ plugins:
   # 直播平台真实流地址解析（src/live/，real-url 解析器，GPL-2.0）。
   - id: resolver
 
+  # 桌面播放器快捷入口：前台拉起 PluginPlayer（G:\local\pluginplayer）并用控制通道驱动。
+  # 与 radio 应用完全独立（独立 RPC 端口 7921）。
+  - id: launcher
+    config:
+      launchPort: 7921
+
   # HTTP API + 控制面板 UI。
   - id: web

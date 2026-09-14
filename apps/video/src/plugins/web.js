@@ -31,7 +31,7 @@ class WebService extends WebBase {
 
     const url = new URL(req.url, `http://${req.headers.host}`)
     const pathname = decodeURIComponent(url.pathname)
-    const { station, streamer, recorder, presets, logfile, mediamtx, channels, resolver, settings } = this.ctx
+    const { station, streamer, recorder, presets, logfile, mediamtx, channels, resolver, settings, launcher } = this.ctx
 
     // ---- API ----
     if (pathname === '/api/status') {
@@ -48,6 +48,7 @@ class WebService extends WebBase {
       if (channels) s.channels = { files: channels.files() }
       if (resolver) s.platformCount = resolver.platformsList().length
       if (settings) s.settings = settings.status()
+      if (launcher) s.launcher = launcher.status()
       return this.json(res, 200, s)
     }
 
@@ -69,6 +70,29 @@ class WebService extends WebBase {
     if (pathname === '/api/relay/stop' && req.method === 'POST') {
       station.stopRelay()
       return this.json(res, 200, station.status())
+    }
+
+    // ---- 桌面播放器快捷入口（前台拉起 PluginPlayer + 控制通道）----
+    if (pathname === '/api/player' && req.method === 'GET') {
+      return this.json(res, 200, launcher ? launcher.status() : { enabled: false })
+    }
+    if (pathname === '/api/player/launch' && req.method === 'POST') {
+      if (!launcher) return this.json(res, 503, { error: 'launcher 插件未启用' })
+      const body = await this.readJson(req)
+      const r = await launcher.launchStart((body.url || '').trim())
+      return this.json(res, 200, r)
+    }
+    if (pathname === '/api/player/quit' && req.method === 'POST') {
+      if (!launcher) return this.json(res, 503, { error: 'launcher 插件未启用' })
+      const r = await launcher.launchStop()
+      return this.json(res, 200, r)
+    }
+    if (pathname === '/api/player/control' && req.method === 'POST') {
+      if (!launcher) return this.json(res, 503, { error: 'launcher 插件未启用' })
+      const body = await this.readJson(req)
+      const action = String(body.action || '')
+      const r = await launcher.launchControl(action, { path: (body.path || '').trim(), pos: Number(body.pos || 0) })
+      return this.json(res, 200, r)
     }
 
     // 优雅关闭（仅本机 loopback 允许）
@@ -227,7 +251,7 @@ class WebService extends WebBase {
   }
 }
 
-WebService.inject = [...WebBase.inject, 'station', 'streamer', 'recorder', 'presets', 'logfile', 'mediamtx', 'channels', 'resolver', 'settings']
+WebService.inject = [...WebBase.inject, 'station', 'streamer', 'recorder', 'presets', 'logfile', 'mediamtx', 'channels', 'resolver', 'settings', 'launcher']
 
 export default function webPlugin(ctx) {
   ctx.plugin(WebService)
