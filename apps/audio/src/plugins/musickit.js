@@ -8,8 +8,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 class MusickitService extends Service {
-  constructor(ctx) {
+  // 行配置此前根本没生效：插件函数把 config 丢了，而 cfg 读的是 ctx.config.musickit
+  // （config 行的 schema 里并没有这个键）→ cordis.yml / cordis.patch.yml 里 musickit
+  // 行的配置全部被忽略，只能用硬编码兜底值。与 monitor.js 对齐：行配置进构造器，
+  // 为空时回退到 config 服务的 musickit 段（兼容旧写法与单测的 FakeConfig）。
+  constructor(ctx, cfg = {}) {
     super(ctx, 'musickit')
+    this._rowCfg = cfg || {}
     this.started = false
     this.rendering = false
     this.channel = this.cfg.channel || 'random'
@@ -24,7 +29,8 @@ class MusickitService extends Service {
   }
 
   get cfg() {
-    return this.ctx.config.musickit || {}
+    if (this._rowCfg && Object.keys(this._rowCfg).length) return this._rowCfg
+    return (this.ctx.config && this.ctx.config.musickit) || {}
   }
 
   get root() {
@@ -182,6 +188,6 @@ class MusickitService extends Service {
 
 MusickitService.inject = ['config']
 
-export default function musickitPlugin(ctx) {
-  ctx.plugin(MusickitService)
+export default function musickitPlugin(ctx, cfg = {}) {
+  ctx.plugin(MusickitService, cfg)
 }
