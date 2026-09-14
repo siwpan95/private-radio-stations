@@ -15,7 +15,8 @@ npm workspaces：packages/core（loader/config-validate/ffmpeg-args/logfile/pres
 - `apps/audio` 的 `monitor`（面板「本机监听」，无窗口跟随转播，RPC 7911）
 
 exe 解析（两侧同一套）：`config exe` > 环境变量 `PP_EXE` > **候选探测**：本仓 `external/pluginplayer/dist/pluginplayer.exe` → 源码仓 `C:\pluginplayer-main\dist\pluginplayer.exe`（取第一个存在的）。
-- 投放：`python scripts/fetch-deps.py --features`（Gitee v1.0.0 发布物）或 `npm run link:player`（同步源码仓 `build.py` 出的 dist，整目录）
+- 投放：`python scripts/fetch-deps.py --features`（从 Gitee 拉**最新发行版** —— 运行时读 `/releases/latest` 的 302 解析 tag，再取 `SHA256SUMS.txt` 校验；发新版无需改脚本，`--force` 换版本）
+  或 `npm run link:player`（同步源码仓 `build.py` 出的 dist，整目录）
 - `external/` 是 .gitignore 的挂载点，不入库
 
 ## 常用命令

@@ -31,10 +31,14 @@ exe 解析顺序（`apps/*/src/plugins/{launcher,monitor}.js`，两侧同一套�
 3. 候选探测：本仓 `external/pluginplayer/dist/pluginplayer.exe` → 源码仓 `C:\pluginplayer-main\dist\pluginplayer.exe`（取第一个存在的）。
 
 ```bash
-python scripts/fetch-deps.py --features   # 从 Gitee 放 v1.0.0 发布物到 external/pluginplayer/dist
+python scripts/fetch-deps.py --features   # 从 Gitee 拉「最新发行版」到 external/pluginplayer/dist（运行时解析 tag，不写死版本）
 npm run link:player                       # 或：把源码仓构建产物同步进挂载点（整目录）
 npm run link:player -- --dry              # 只报告将同步什么，不落盘
 ```
+
+> 💡 播放器版本**不在消费方写死**：`fetch-deps.py` 每次运行都去 Gitee 解析最新发行版
+> （读 `/releases/latest` 的 302 拿 tag，再取同发行版 `SHA256SUMS.txt` 校验），
+> 所以播放器发新版**不需要改本仓任何文件**。`--force` 可强制换成新版。
 
 > ⚠️ `dist/` 必须**整目录**使用：exe 依赖同目录的 FFmpeg/SDL3/MinGW DLL 与 `plugins/`，只拷 exe 会启动失败。
 > ⚠️ 不要在源码里写死盘符路径（`D:\`、`G:\`）——仓库换盘符就会静默断链；解析已一律改为相对本仓 + 候选探测。
