@@ -1,6 +1,7 @@
 # 📺📻 本地转播站（monorepo）
 
-G:\repos\private-radio-stations —— 视频转播与音频电台的整合仓库（npm workspaces，独立仓 siwpan/private-radio-stations）。
+C:\private-radio-stations-master —— 视频转播与音频电台的整合仓库（npm workspaces，独立仓 siwpan/private-radio-stations）。
+（上游本地副本曾位于 `G:\repos\private-radio-stations`、`D:\private-radio-stations-master`；本文档一律用当前副本路径。）
 
 ```
 private-radio-stations/
@@ -8,9 +9,35 @@ private-radio-stations/
 ├─ apps/portal/      统一门户 :9000（iframe 分页签嵌入两面板 + 聚合状态卡）
 ├─ apps/video/       视频转播站（ffmpeg → MediaMTX：RTSP/HLS/WebRTC；IPTV 频道库；59 平台解析）
 ├─ apps/audio/       音频电台（Node 直发 MP3/HLS；多码率；全球电台浏览）
+├─ external/         仓库外资产挂载点（.gitignore 忽略，不入库）：
+│                      pluginplayer/dist —— PluginPlayer 播放器本体（整目录）
 ├─ start/stop-{video,radio,portal}.bat
 └─ docs/             合并方案 / 架构笔记 / 网络指南 / 配置规划 / 面板规划
 ```
+
+## 外部资产：PluginPlayer（本机监听 / 快捷入口）
+
+播放器是独立仓 siwpan/pluginplayer，**不属于本仓库**，由两个消费插件拉起：
+
+| 消费方 | 插件 | 用途 | RPC 端口 |
+|--------|------|------|----------|
+| apps/video | `launcher` | 面板「快捷入口」，前台可见窗口 | 7921 |
+| apps/audio | `monitor` | 面板「本机监听」，无窗口跟随转播 | 7911 |
+
+exe 解析顺序（`apps/*/src/plugins/{launcher,monitor}.js`，两侧同一套实现）：
+
+1. `cordis.patch.yml` 的 `exe` 配置；
+2. 环境变量 `PP_EXE`；
+3. 候选探测：本仓 `external/pluginplayer/dist/pluginplayer.exe` → 源码仓 `C:\pluginplayer-main\dist\pluginplayer.exe`（取第一个存在的）。
+
+```bash
+python scripts/fetch-deps.py --features   # 从 Gitee 放 v1.0.0 发布物到 external/pluginplayer/dist
+npm run link:player                       # 或：把源码仓构建产物同步进挂载点（整目录）
+npm run link:player -- --dry              # 只报告将同步什么，不落盘
+```
+
+> ⚠️ `dist/` 必须**整目录**使用：exe 依赖同目录的 FFmpeg/SDL3/MinGW DLL 与 `plugins/`，只拷 exe 会启动失败。
+> ⚠️ 不要在源码里写死盘符路径（`D:\`、`G:\`）——仓库换盘符就会静默断链；解析已一律改为相对本仓 + 候选探测。
 
 ## 快速开始
 
@@ -44,6 +71,7 @@ npm test               # 全部单测
 npm run check:video / test:video / check:radio / test:radio   # 单应用
 npm run smoke:video / smoke:radio          # 端到端冒烟（需对应服务在跑）
 node scripts/dump-config.mjs <video|audio>  # 打印生效配置树（base+patch）
+npm run link:player                         # 同步 PluginPlayer 源码仓构建产物到 external/
 node scripts/update-playlists.mjs           # 镜像链更新 IPTV 频道列表
 ```
 
@@ -64,7 +92,7 @@ git hooks（`npm install` 自动安装）：pre-commit = 快速门禁（语法+y
 
 ## 仓库索引标注（2026-08-27 · siwpan 统一治理）
 
-> 本仓现行 master = 整合版（Node.js + Cordis 三簇：portal/video/audio + harness）；3.0 分支 = 转播版 Relay Only；2.0/archived* = 归档。本地对应 G:\repos\private-radio-stations。
+> 本仓现行 master = 整合版（Node.js + Cordis 三簇：portal/video/audio + harness）；3.0 分支 = 转播版 Relay Only；2.0/archived* = 归档。本地对应 C:\private-radio-stations-master（上游曾位于 G:\repos\private-radio-stations）。
 > 本标注为发布面统一追加，不改变原有内容。
 
 ---

@@ -60,7 +60,8 @@ plugins:
   # 直播平台真实流地址解析（src/live/，real-url 解析器，GPL-2.0）。
   - id: resolver
 
-  # 桌面播放器快捷入口：前台拉起 PluginPlayer（G:\local\pluginplayer）并用控制通道驱动。
+  # 桌面播放器快捷入口：前台拉起 PluginPlayer（external/pluginplayer/dist，整目录）并用控制通道驱动。
+  # exe 解析顺序见 src/plugins/launcher.js（配置 > PP_EXE > 本仓 external/ → 源码仓 C:\pluginplayer-main\dist）。
   # 与 radio 应用完全独立（独立 RPC 端口 7921）。
   - id: launcher
     config:

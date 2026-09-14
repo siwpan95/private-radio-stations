@@ -1,6 +1,6 @@
 // monitor plugin — 本机监听（P3，2026-09-13）
 // ---------------------------------------------------------------------------
-// 把 PluginPlayer（G:\local\pluginplayer）当作**本机收听端**拉起来听本服务的转播：
+// 把 PluginPlayer（external/pluginplayer/dist，见文件末候选探测）当作**本机收听端**拉起来听本服务的转播：
 //
 //   · 进程：pluginplayer.exe --hidden --allow-network-input --rpc-port <port> --rpc-token <token>
 //   · 控制：127.0.0.1:<port> 换行分隔 JSON（首条必须是 auth），驱动
@@ -19,8 +19,13 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
-// 外部资产（PluginPlayer）不属于本仓库：默认投放在应用根下的 data/pluginplayer/。
-const DEFAULT_EXE = 'data/pluginplayer/dist/pluginplayer.exe'
+// 外部资产（PluginPlayer，独立仓 siwpan/pluginplayer）不属于本仓库，按候选顺序探测：
+//   1. 本仓挂载点 external/pluginplayer/dist/ —— scripts/fetch-deps.py 投放
+//   2. 源码仓构建产物 C:\pluginplayer-main\dist\ —— build.py 产出，开发时直接联动
+// 两者都必须**整目录**使用：exe 依赖同目录的 DLL 与 plugins/（只拷 exe 会崩）。
+// 可用 config plugins.monitor.exe 或环境变量 PP_EXE 覆盖（相对路径按应用根解析）。
+const DEFAULT_EXE_REL = path.join('..', '..', 'external', 'pluginplayer', 'dist', 'pluginplayer.exe')
+const FALLBACK_EXE = 'C:\\pluginplayer-main\\dist\\pluginplayer.exe'
 
 /** 控制通道客户端：换行分隔 JSON over TCP（协议见 src/core/control.h）。 */
 class Rpc {
@@ -128,10 +133,14 @@ class MonitorService extends Service {
     ctx.on('relay:stop', () => { this._onRelayStop() })
   }
 
+  /** 配置 > 环境变量 > 候选探测（本仓 external/ → 源码仓 dist/）；相对路径按应用根解析。 */
   exePath() {
-    const raw = this.cfg.exe || process.env.PP_EXE || DEFAULT_EXE
-    // 相对路径按应用根解析（与 logfile/hls 等一致），绝对路径原样使用
-    return path.isAbsolute(raw) ? raw : path.resolve(this.ctx.config.root || '.', raw)
+    const root = this.ctx.config.root || '.'
+    const raw = this.cfg.exe || process.env.PP_EXE
+    if (raw) return path.isAbsolute(raw) ? raw : path.resolve(root, raw)
+    const candidates = [path.resolve(root, DEFAULT_EXE_REL), FALLBACK_EXE]
+    // 都探测不到时返回首个候选：报错信息里给出的是「本仓挂载点」这个正解，便于照做投放。
+    return candidates.find((p) => fs.existsSync(p)) || candidates[0]
   }
 
   rpcPort() {

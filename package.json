@@ -20,6 +20,7 @@
     "check:video": "npm run check --workspace @relay/video",
     "test:video": "npm test --workspace @relay/video",
     "portal": "cd ..\\..\\platform && npm run portal",
+    "link:player": "node scripts/link-player.mjs",
     "harness": "node harness/harness.mjs"
   },
   "engines": {

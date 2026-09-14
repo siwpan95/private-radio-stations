@@ -1,6 +1,6 @@
 // launcher plugin — 桌面播放器快捷入口（2026-09-14，修正目标到 video 面板）
 // ---------------------------------------------------------------------------
-// 在 video 控制面板（http://localhost:8100/）里提供一个「拉起 G:\local\pluginplayer」
+// 在 video 控制面板（http://localhost:8100/）里提供一个「拉起 PluginPlayer」
 // 的入口：点一下就在本机弹出 PluginPlayer 可见窗口，并可用控制通道驱动播放。
 //
 //   · 进程：pluginplayer.exe --allow-network-input --rpc-port <port> --rpc-token <token> [url?]
@@ -17,7 +17,13 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const DEFAULT_EXE = 'G:\\local\\pluginplayer\\dist\\pluginplayer.exe'
+// PluginPlayer（独立仓 siwpan/pluginplayer）不属于本仓库，按候选顺序探测：
+//   1. 本仓挂载点 external/pluginplayer/dist/ —— scripts/fetch-deps.py 投放
+//   2. 源码仓构建产物 C:\pluginplayer-main\dist\ —— build.py 产出，开发时直接联动
+// 两者都必须**整目录**使用：exe 依赖同目录的 DLL 与 plugins/（只拷 exe 会崩）。
+// 可用 config plugins.launcher.exe 或环境变量 PP_EXE 覆盖（相对路径按应用根解析）。
+const DEFAULT_EXE_REL = path.join('..', '..', 'external', 'pluginplayer', 'dist', 'pluginplayer.exe')
+const FALLBACK_EXE = 'C:\\pluginplayer-main\\dist\\pluginplayer.exe'
 
 /** 控制通道客户端：换行分隔 JSON over TCP（协议见 pluginplayer src/core/control.h）。 */
 class Rpc {
@@ -122,8 +128,14 @@ class LauncherService extends Service {
     ctx.on('dispose', () => { this.launchStop().catch(() => {}) })
   }
 
+  /** 配置 > 环境变量 > 候选探测（本仓 external/ → 源码仓 dist/）；相对路径按应用根解析。 */
   exePath() {
-    return this.cfg.exe || process.env.PP_EXE || DEFAULT_EXE
+    const root = this.ctx.config.root || '.'
+    const raw = this.cfg.exe || process.env.PP_EXE
+    if (raw) return path.isAbsolute(raw) ? raw : path.resolve(root, raw)
+    const candidates = [path.resolve(root, DEFAULT_EXE_REL), FALLBACK_EXE]
+    // 都探测不到时返回首个候选：报错信息里给出的是「本仓挂载点」这个正解，便于照做投放。
+    return candidates.find((p) => fs.existsSync(p)) || candidates[0]
   }
 
   /** 快捷入口 RPC 端口（与 radio 应用的监听/入口区分），env PP_LAUNCH_PORT 可覆盖。 */
