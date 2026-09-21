@@ -5,7 +5,7 @@
 > ffmpeg → MediaMTX 管线。
 >
 > 实现入口：`scripts/satellite.mjs`（`npm run satellite`），
-> 详见下方 §八「实施说明」。
+> 详见下方 §六「实施说明」。
 
 ## 一、结论摘要（先说要点）
 
@@ -237,5 +237,47 @@ satellite:
   MediaMTX 对纯视频轨的处理（现有 `streamer.js` 用 `-map 0:a:0?` 容忍无音轨）。
 - **硬件编码已排除**（§4.2 实测），故「实时卫星频道」这条路在本机确定不可行。
   若将来换机，可重跑 §4.2 的三个编码器测试；若届时可用，可考虑加一条实时 `satellite` 源。
-- **未做定时任务**：当前需手动执行 `npm run satellite`。若需每日自动更新，
-  可加 Windows 计划任务或复用项目既有的 automation 机制。
+- **每日自动生成（已落地，见 §八）**：无需再手动 `npm run satellite`；
+  由 cordis 调度服务与 WorkBuddy 定时自动化双重冗余触发，成品按日期戳命名并自动裁剪。
+
+## 八、每日自动生成（双重调度冗余，已落地）
+
+### 8.1 为什么是两条链路
+
+单条链路存在明确的失效场景：cordis 调度服务只在应用进程存活时有效（进程退出当天即漏跑）；
+外部自动化只在调度器存活时有效（机器重装 / WorkBuddy 未启动则失效）。
+因此采用**互为冗余**而非二选一：
+
+1. **cordis 调度服务** `apps/video/src/plugins/satelliteScheduler.js`
+   —— 随 `video` 应用启动，按墙钟 `hour:00` 触发；若当日该时刻已过（启动晚），
+   则 5 分钟后补跑一次。
+2. **WorkBuddy 定时自动化** —— 每日 03:00 在项目根目录执行 `npm run satellite:daily`。
+
+两条链路共用同一个脚本 `scripts/satellite-daily.mjs`，脚本内置**进程锁**
+（`.run.lock`，锁龄 < 6 小时视为「仍在进行中」直接退出），因此即使两条链路
+同时触发也只会真正生成一次，不会重复下载 GIBS 瓦片。
+
+### 8.2 脚本职责
+
+`scripts/satellite-daily.mjs`（`npm run satellite:daily`）：
+
+1. 读 `apps/video/cordis.yml` 的 `satellite` 段（纯文本切片解析，规避 `!!js` 标签）；
+2. 以当天日期戳命名成品：`satellite-YYYY-MM-DD.mp4`；
+3. 额外复制一份为 `satellite.mp4`（稳定入口，供转播配置直接引用）；
+4. 按 `keep` 裁剪旧成品（只保留最近 N 份带日期戳的文件）；
+5. 全程走 `scripts/satellite.mjs` 的既有离线渲染路径。
+
+### 8.3 配置项
+
+```yaml
+satellite:
+  enabled: true
+  auto: true     # 关闭后两条链路都不再触发（cordis 侧直接禁用，脚本侧仍可手动跑）
+  hour: 3        # 墙钟触发小时（0..23）
+  keep: 7        # 保留最近 N 份成品，超出裁剪
+```
+
+### 8.4 广播入口
+
+生成完成后 cordis 侧 emit `satellite:generated`（载荷含输出文件路径），
+供后续频道刷新 / 通知类插件订阅。
