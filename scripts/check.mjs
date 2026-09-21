@@ -19,6 +19,24 @@ function fail(msg) {
 function run(cmd, args, opts = {}) {
   return spawnSync(cmd, args, { cwd: ROOT, encoding: 'utf8', ...opts })
 }
+
+// 定位可用的 git 可执行文件。
+// 本机可能没有系统 Git（PATH 中无 git），此时 spawnSync('git', …) 会以
+// status=null + error.code='ENOENT' 返回；若按 status!==0 判定会误报失败，
+// 且 stdout 为 undefined 会打印出无意义的 "undefined"。
+// 支持通过 GIT_EXE 环境变量显式指定（如便携版 Git），否则回退 PATH 查找。
+function resolveGit() {
+  const candidates = [process.env.GIT_EXE, 'git'].filter(Boolean)
+  for (const exe of candidates) {
+    const r = spawnSync(exe, ['--version'], { cwd: ROOT, encoding: 'utf8' })
+    if (r.status === 0) return { exe, ok: true }
+    if (r.error && r.error.code !== 'ENOENT') {
+      // 可执行但报错：仍视为可用，交由具体命令暴露原因
+      return { exe, ok: true }
+    }
+  }
+  return { exe: null, ok: false }
+}
 function collectJs(dir) {
   const out = []
   for (const f of fs.readdirSync(dir)) {
@@ -39,7 +57,15 @@ for (const dir of ['packages/core/src', 'apps/portal/src', 'apps/portal/public',
   if (!fs.existsSync(abs)) continue
   for (const p of collectJs(abs)) {
     const r = run(NODE, ['--check', p])
-    if (r.status !== 0) fail('syntax: ' + path.relative(ROOT, p) + '\n' + r.stderr.slice(0, 600))
+    if (r.status !== 0) {
+      // Node 二进制本身不可用时（NODE 指向不存在的路径）spawnSync 会返回
+      // status=null + stderr=undefined，直接 .slice() 会抛 TypeError 把关禁
+      // 崩在半路。这里统一兜底，保证任何情况下都给出可读的失败原因。
+      const why = r.status === null
+        ? '(node 无法执行：' + NODE + '；' + ((r.error && r.error.code) || 'unknown') + ')'
+        : (r.stderr || r.stdout || '(no output)')
+      fail('syntax: ' + path.relative(ROOT, p) + '\n' + String(why).slice(0, 600))
+    }
   }
 }
 console.log('   syntax ok')
@@ -67,10 +93,23 @@ for (const pj of ['package.json', 'packages/core/package.json', 'apps/portal/pac
 }
 
 console.log('== check: git whitespace (staged) ==')
-if (fs.existsSync(path.join(ROOT, '.git'))) {
-  const r = run('git', ['diff', '--cached', '--check'])
-  if (r.status !== 0) fail('staged whitespace:\n' + r.stdout)
-  else console.log('   whitespace ok')
+if (!fs.existsSync(path.join(ROOT, '.git'))) {
+  console.log('   no git repo, skipped')
+} else {
+  const { exe: gitExe, ok: gitOk } = resolveGit()
+  if (!gitOk) {
+    // 非致命：本机未安装 git（或不在 PATH）时，无法检查暂存区空白。
+    // 明确提示并跳过，而不是误报失败。
+    console.log('   git not available, skipped (set GIT_EXE to enable)')
+  } else {
+    const r = run(gitExe, ['diff', '--cached', '--check'])
+    if (r.status !== 0) {
+      // stdout/stderr 可能为 null（无输出/异常），统一兜底避免打印 "undefined"
+      fail('staged whitespace:\n' + (r.stdout || r.stderr || '(no output; status=' + r.status + ')'))
+    } else {
+      console.log('   whitespace ok')
+    }
+  }
 }
 
 if (!fast) {

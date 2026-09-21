@@ -26,7 +26,12 @@ plugins:
       presetsFile: presets.json
       channelsDir: playlists   # IPTV m3u 频道库目录
       liveDir: src/live        # real-url 平台解析器目录
-      pythonCmd: python        # 解析器使用的 Python
+      # 解析器使用的 Python。
+      # 用 !!js 在运行时推导【项目自带 venv】的绝对路径，不写死盘符/仓库位置
+      # （避免项目被移动或换盘后解析器全部失效，报「解析器无有效输出」）。
+      # 注意 !!js 作用域里的 root 是本 yml 所在目录（apps/video），
+      # 故需上溯两级到仓库根；可用环境变量 RESOLVER_PYTHON 覆盖。
+      pythonCmd: !!js "process.env.RESOLVER_PYTHON || path.join(root, '..', '..', '.venv', 'Scripts', 'python.exe')"
 
   # 文件日志 + 内存错误环（实现来自 @relay/core，超限截断）。
   - id: logfile

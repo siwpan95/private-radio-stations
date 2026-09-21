@@ -8,14 +8,35 @@ import { execFileSync } from 'node:child_process'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 
-let gitDir = path.join(ROOT, '.git')
-try {
-  const out = execFileSync('git', ['-C', ROOT, 'rev-parse', '--git-dir'], { encoding: 'utf8' }).trim()
-  gitDir = path.isAbsolute(out) ? out : path.join(ROOT, out)
-} catch {
+// 定位可用的 git。本机可能未安装系统 Git（PATH 中无 git），
+// 此时 execFileSync 会抛 ENOENT；旧实现直接 catch 并打印 "no git repo"，
+// 把「git 不存在」误报成「无仓库」，从而静默跳过 hook 安装。
+// 支持 GIT_EXE 显式指定（如便携版 Git）。
+function resolveGit() {
+  for (const exe of [process.env.GIT_EXE, 'git'].filter(Boolean)) {
+    try {
+      const out = execFileSync(exe, ['-C', ROOT, 'rev-parse', '--git-dir'], { encoding: 'utf8' }).trim()
+      return { exe, gitDir: path.isAbsolute(out) ? out : path.join(ROOT, out) }
+    } catch (e) {
+      // git 可执行但当前目录不是仓库 -> 真的没有仓库，无需继续尝试
+      if (e && e.status !== undefined && e.status !== null) return { exe, gitDir: null }
+      // ENOENT：该候选不存在，试下一个
+    }
+  }
+  return { exe: null, gitDir: null }
+}
+
+const { exe: gitExe, gitDir: resolved } = resolveGit()
+
+if (!gitExe) {
+  console.log('[hooks] git not found on PATH, skip (set GIT_EXE to enable)')
+  process.exit(0)
+}
+if (!resolved) {
   console.log('[hooks] no git repo, skip')
   process.exit(0)
 }
+const gitDir = resolved
 const hooksDir = path.join(gitDir, 'hooks')
 if (!fs.existsSync(hooksDir)) {
   console.log('[hooks] hooks dir missing, skip')
@@ -39,9 +60,43 @@ const HOOKS = {
   ].join('\n'),
 }
 
+// 自检：本机 git 是否真能 spawn `#!/bin/sh` 钩子。
+// 便携版 Git 若缺少 /bin/sh 运行时，`git commit` 会以
+//   error: cannot spawn .git/hooks/pre-commit: No such file or directory
+// 直接失败（且提示与真实原因无关，极难排查）。这里提前探测并给出可操作提示。
+function canSpawnShHook(gitExe) {
+  // 用一个真实存在的 hook 名（pre-commit）+ 不存在的脚本名探测：
+  // 若 sh 可 spawn，git 只会报「hook 不存在」；若不能，则报 cannot spawn。
+  try {
+    const out = execFileSync(gitExe, ['-C', ROOT, 'hook', 'run', 'pre-commit', '--', '--probe-nonexistent'],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 20000 })
+    return { ok: true, out: out.trim() }
+  } catch (e) {
+    const msg = String((e && (e.stderr || e.message)) || e)
+    // 缺少 /bin/sh 的典型信号
+    const bad = /cannot spawn/i.test(msg)
+    return { ok: !bad, out: msg.trim() }
+  }
+}
+
 for (const [name, body] of Object.entries(HOOKS)) {
   const p = path.join(hooksDir, name)
   fs.writeFileSync(p, body + '\n')
   try { fs.chmodSync(p, 0o755) } catch { /* Windows 无需执行位 */ }
   console.log('[hooks] installed ' + p)
+}
+
+const probe = canSpawnShHook(gitExe)
+if (probe.ok) {
+  console.log('[hooks] sh hook spawning verified')
+} else {
+  console.warn(
+    '[hooks] WARNING: 本机 git 无法执行 shell 钩子，提交时会出现\n' +
+    '           "error: cannot spawn .git/hooks/pre-commit: No such file or directory"\n' +
+    '         多半是便携版/精简版 Git 缺少 /bin/sh 运行时。可选处理：\n' +
+    '           a) 换用完整版 Git for Windows（自带 usr/bin/sh.exe）；或\n' +
+    '           b) 提交时临时跳过：git commit --no-verify\n' +
+    '              手动跑门禁：npm run check\n' +
+    '         探测输出：' + probe.out.slice(0, 300)
+  )
 }
