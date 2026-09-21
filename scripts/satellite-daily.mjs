@@ -14,7 +14,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { spawnSync } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
+
+// 单次生成的总时长上限（分钟）。可用环境变量 SATELLITE_TIMEOUT_MIN 覆盖。
+// 为什么需要看门狗（实测教训）：satellite.mjs 曾因 Windows 上 fs.rmSync 递归删除
+// 偶发挂起、以及无超时的 fetch 卡在 GIBS 上，导致一次「每日任务」挂了 4.5 小时
+// 既不产出也不退出——进程锁因此长期占用，cordis 调度与 WorkBuddy 自动化双双失效。
+// 有了看门狗，最坏情况是有界的：超时即杀进程树、释放锁、以 124 退出并留日志。
+const DEFAULT_TIMEOUT_MIN = 25
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
@@ -119,7 +126,55 @@ export function pruneOld(dir, keep = 7) {
   return removed
 }
 
-function main() {
+// Windows 上 child.kill() 只杀直接子进程，ffmpeg 等孙进程会残留，必须用 taskkill /T。
+function killTree(pid) {
+  try {
+    if (process.platform === 'win32') {
+      spawnSync('taskkill', ['/F', '/T', '/PID', String(pid)], { stdio: 'ignore' })
+    } else {
+      try {
+        process.kill(pid, 'SIGKILL')
+      } catch {
+        /* 已退出 */
+      }
+    }
+  } catch {
+    /* 尽力而为 */
+  }
+}
+
+// 带看门狗的子进程执行：超时（默认 25 分钟）则杀掉整棵进程树并返回 status=124。
+export function spawnWithWatchdog(argv, stdioFd, timeoutMinutes = DEFAULT_TIMEOUT_MIN) {
+  const ms = Math.max(1, Number(timeoutMinutes) || DEFAULT_TIMEOUT_MIN) * 60 * 1000
+  return new Promise((resolve) => {
+    let child
+    try {
+      child = spawn(process.execPath, argv, {
+        cwd: ROOT,
+        stdio: ['ignore', stdioFd, stdioFd],
+        windowsHide: true,
+      })
+    } catch (e) {
+      resolve({ status: 1, error: e.message, timedOut: false })
+      return
+    }
+    let done = false
+    const finish = (result) => {
+      if (done) return
+      done = true
+      clearTimeout(timer)
+      resolve(result)
+    }
+    const timer = setTimeout(() => {
+      killTree(child.pid)
+      finish({ status: 124, timedOut: true, minutes: Math.round(ms / 60000) })
+    }, ms)
+    child.on('exit', (code, signal) => finish({ status: code, signal, timedOut: false }))
+    child.on('error', (e) => finish({ status: 1, error: e.message, timedOut: false }))
+  })
+}
+
+async function main() {
   const cfg = parseSatelliteConfig()
   if (cfg.enabled === false || cfg.auto === false) {
     console.log('[satellite-daily] 跳过：satellite.enabled/auto=false')
@@ -163,8 +218,18 @@ function main() {
   console.log(`[satellite-daily] 产出：${path.relative(ROOT, outFile)}`)
 
   const logFd = fs.openSync(logPath, 'w')
-  const r = spawnSync(process.execPath, argv, { cwd: ROOT, stdio: ['ignore', logFd, logFd] })
+  const timeoutMin = Number(process.env.SATELLITE_TIMEOUT_MIN) || DEFAULT_TIMEOUT_MIN
+  const r = await spawnWithWatchdog(argv, logFd, timeoutMin)
   fs.closeSync(logFd)
+
+  if (r.timedOut) {
+    fs.rmSync(lockPath, { force: true })
+    console.error(
+      `[satellite-daily] 超过 ${r.minutes} 分钟未完成，已终止子进程并释放锁。` +
+        `详见 ${path.relative(ROOT, logPath)}（常见原因：网络挂起 / 瓦片清理被占用）。`
+    )
+    process.exit(124)
+  }
 
   if (r.status !== 0) {
     fs.rmSync(lockPath, { force: true })
@@ -181,4 +246,9 @@ function main() {
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))
-if (isMain) main()
+if (isMain) {
+  main().catch((e) => {
+    console.error('[satellite-daily] 未捕获异常：' + ((e && e.stack) || e))
+    process.exit(1)
+  })
+}

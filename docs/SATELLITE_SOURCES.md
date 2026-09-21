@@ -281,3 +281,22 @@ satellite:
 
 生成完成后 cordis 侧 emit `satellite:generated`（载荷含输出文件路径），
 供后续频道刷新 / 通知类插件订阅。
+
+### 8.5 卡死防护（实测教训）
+
+一次「每日任务」曾在 Windows 上挂起 **4.5 小时**既不产出也不退出，
+进程锁被长期占用，两条调度链路同时失效。两个根因已修：
+
+1. **瓦片请求无超时** —— GIBS 偶发「连上但不返回」。
+   已为 capabilities 与每张瓦片的 `fetch` 加 `AbortSignal.timeout(20s)` 并重试。
+2. **`fs.rmSync(dir, { recursive: true })` 在 Windows 上偶发永久挂起**
+   （杀毒 / 索引器短暂持有刚写完的瓦片时，其内部同步重试循环卡住主线程）。
+   已改为 `scripts/satellite.mjs` 中的 `removeDirSafe()`：显式
+   `readdir → unlink → rmdir`，逐项 try/catch，失败只提示不中断
+   （中间产物可重建，不值得让整条流水线停摆）。
+   > 顺带修掉一处隐性 bug：收尾那行 `fs.rmSync('<dir>/tiles_*')` 用了通配符，
+   > 而 `fs.rmSync` **不支持通配符**，实际是空操作，残留瓦片从未被清理。
+
+兜底看门狗：`satellite-daily.mjs` 用 `spawn` + 定时器（默认 **25 分钟**，
+可用环境变量 `SATELLITE_TIMEOUT_MIN` 覆盖），超时则 `taskkill /T /F` 杀掉整棵
+进程树、释放 `.run.lock`、以 **124** 退出并留日志。最坏情况因此是有界的。

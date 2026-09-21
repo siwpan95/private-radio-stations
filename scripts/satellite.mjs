@@ -71,6 +71,8 @@ const SOURCES = {
 const CAPS_URL = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/1.0.0/WMTSCapabilities.xml'
 const TILE_BASE = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best'
 const TILE_PX = 256
+// 单张瓦片请求超时（ms）。GIBS 偶发「连上但不返回」，无超时会永久挂起。
+const FETCH_TIMEOUT_MS = 20000
 
 // ---- 参数解析 ------------------------------------------------------------
 const argv = process.argv.slice(2)
@@ -163,7 +165,10 @@ async function resolveMatrixSet(layer) {
   }
   if (!xml) {
     process.stdout.write('  拉取 WMTS capabilities… ')
-    const res = await fetch(CAPS_URL, { headers: { 'User-Agent': 'private-radio-stations/satellite' } })
+    const res = await fetch(CAPS_URL, {
+      headers: { 'User-Agent': 'private-radio-stations/satellite' },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    })
     if (!res.ok) throw new Error(`capabilities 请求失败 HTTP ${res.status}`)
     xml = await res.text()
     console.log(`ok (${(xml.length / 1048576).toFixed(2)} MB)`)
@@ -214,6 +219,48 @@ export function tileUrl(base, layer, time, matrixSet, z, y, x, ext) {
   return `${base}/${layer}/default/${time}/${matrixSet}/${z}/${y}/${x}.${ext}`
 }
 
+// ---- 安全删除 ------------------------------------------------------------
+// 显式 readdir → unlink/rmdir 递归删除，全程 try/catch，失败只计数不抛错。
+//
+// 为什么不用 fs.rmSync(dir, { recursive: true })：
+//   实测在 Windows 上它**偶发永久挂起**（杀毒软件 / 索引器短暂持有刚写完的
+//   瓦片文件时，其内部同步重试循环会卡住主线程，且不超时）。
+//   曾导致每日任务挂起 4.5 小时不自愈，只能人工杀进程。
+//   逐文件 unlinkSync 不走那条递归重试通道，且单次失败可忽略——
+//   中间产物无论如何都可以重建，不值得让整条流水线停摆。
+export function removeDirSafe(dir) {
+  let names = []
+  try {
+    names = fs.readdirSync(dir)
+  } catch {
+    return { ok: false, removed: 0, failed: 0 }
+  }
+  let removed = 0
+  let failed = 0
+  for (const name of names) {
+    const p = path.join(dir, name)
+    try {
+      if (fs.statSync(p).isDirectory()) {
+        const r = removeDirSafe(p)
+        removed += r.removed
+        failed += r.failed
+      } else {
+        fs.unlinkSync(p)
+        removed++
+      }
+    } catch {
+      failed++
+    }
+  }
+  try {
+    fs.rmdirSync(dir)
+    removed++
+  } catch {
+    failed++
+  }
+  return { ok: failed === 0, removed, failed }
+}
+
 // ---- 主流程 --------------------------------------------------------------
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms))
@@ -221,8 +268,17 @@ function sleep(ms) {
 
 async function fetchTile(url, attempt = 0) {
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'private-radio-stations/satellite' } })
+    // 必须带超时：GIBS 偶发「连上但不返回」，无超时的 fetch 会永久挂起。
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'private-radio-stations/satellite' },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    })
     if (!res.ok) {
+      // 5xx / 429 属服务端瞬时故障（实测偶发 502），退避重试后再判定；4xx 直接失败
+      if ((res.status >= 500 || res.status === 429) && attempt < 2) {
+        await sleep(2000 * (attempt + 1))
+        return fetchTile(url, attempt + 1)
+      }
       // 空白瓦片服务端也可能返回 404；交给上层按内容判定
       return { ok: false, status: res.status, buf: null }
     }
@@ -233,7 +289,10 @@ async function fetchTile(url, attempt = 0) {
       await sleep(1500 * (attempt + 1))
       return fetchTile(url, attempt + 1)
     }
-    return { ok: false, status: 0, buf: null, error: e.message }
+    const why = e && (e.name === 'TimeoutError' || e.name === 'AbortError')
+      ? `超时 ${FETCH_TIMEOUT_MS}ms`
+      : (e && e.message) || String(e)
+    return { ok: false, status: 0, buf: null, error: why }
   }
 }
 
@@ -246,28 +305,52 @@ async function fetchMosaic(dateIso, matrixSet, tilesDir) {
   let ok = 0
   let blank = 0
   let fail = 0
-  const failed = []
+  const failed = []       // 失败格的 {y,x}，末尾统一补占位
+  const holes = []        // 失败格的落盘路径
+  let blankBuf = null     // 服务端返回的「合法空白瓦片」样本（约 1665 字节，ffmpeg 可读）
+  let sampleBuf = null    // 兜底用：任意一张成功下载的合法瓦片
   const t0 = Date.now()
 
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
       const url = tileUrl(TILE_BASE, source.layer, gibsTime, matrixSet, zoom, y, x, source.extension)
       const r = await fetchTile(url)
+      const file = path.join(tilesDir, `${y}_${x}.${source.extension}`)
       if (r.ok) {
-        fs.writeFileSync(path.join(tilesDir, `${y}_${x}.${source.extension}`), r.buf)
+        fs.writeFileSync(file, r.buf)
         ok++
+        if (!sampleBuf && r.buf.length > 2000) sampleBuf = r.buf
         // 实测空白瓦片恰为 1665 字节；据此提示（不阻断，仍写入以保持网格完整）
-        if (r.buf.length <= 2000) blank++
+        if (r.buf.length <= 2000) {
+          blank++
+          if (!blankBuf) blankBuf = r.buf
+        }
       } else {
         fail++
         failed.push(`${y}_${x} (HTTP ${r.status}${r.error ? ' ' + r.error : ''})`)
-        // 失败格用空白占位，避免网格错位
-        fs.writeFileSync(path.join(tilesDir, `${y}_${x}.${source.extension}`), Buffer.alloc(0))
+        holes.push(file)
       }
       await sleep(120) // 礼貌抓取，避免给 NASA 服务施压
     }
     process.stdout.write(`\r  进度 ${((y + 1) / n * 100).toFixed(0)}%  下载 ${ok}  空白 ${blank}  失败 ${fail}   `)
   }
+
+  // 补齐失败格：**绝不能写零字节文件** —— ffmpeg 读空文件会直接
+  // "Invalid data found when processing input"，导致整日拼图失败、整轮生成报废
+  // （实测：单张瓦片 HTTP 502 就足以让一次每日任务失败）。
+  // 优先复用服务端返回的合法空白瓦片；拿不到就复制任意一张成功下载的瓦片。
+  if (holes.length) {
+    const filler = blankBuf || sampleBuf
+    for (const file of holes) {
+      if (filler) fs.writeFileSync(file, filler)
+      else fs.writeFileSync(file, Buffer.alloc(0))
+    }
+    console.log(
+      `\r  失败格 ${holes.length} 个已用${blankBuf ? '空白瓦片' : sampleBuf ? '邻近瓦片' : '空文件'}占位` +
+        '                '
+    )
+  }
+
   const dt = ((Date.now() - t0) / 1000).toFixed(1)
   console.log(`\r  抓取完成：${ok}/${total} 成功，${blank} 空白，${fail} 失败，用时 ${dt}s      `)
 
@@ -391,7 +474,7 @@ async function main() {
 
   fs.mkdirSync(outDir, { recursive: true })
   const workDir = path.join(outDir, '.work')
-  fs.rmSync(workDir, { recursive: true, force: true })
+  removeDirSafe(workDir) // 见 removeDirSafe 注释：fs.rmSync 递归版在 Windows 上会偶发挂起
   fs.mkdirSync(workDir, { recursive: true })
   const keepTiles = flag('keep-tiles')
 
@@ -426,7 +509,12 @@ async function main() {
     const png = path.join(workDir, `frame_${String(i).padStart(4, '0')}.png`)
     mosaicToPng(ffmpeg, tilesDir, png)
     console.log(`  拼图 → ${path.relative(ROOT, png)}  (${(fs.statSync(png).size / 1048576).toFixed(2)} MB)`)
-    if (!keepTiles) fs.rmSync(tilesDir, { recursive: true, force: true })
+    if (!keepTiles) {
+      const r = removeDirSafe(tilesDir)
+      if (r.failed) {
+        console.log(`  清理瓦片：${r.removed} 项成功，${r.failed} 项被占用（忽略，中间产物可重建）`)
+      }
+    }
     frames.push(png)
   }
 
@@ -470,7 +558,10 @@ async function main() {
   )
 
   if (!keepTiles) {
-    fs.rmSync(path.join(workDir, 'tiles_*'), { recursive: true, force: true })
+    // 注意：fs.rmSync 不支持通配符，旧写法（tiles_*）实际是空操作，残留瓦片从未被清理。
+    for (const name of fs.readdirSync(workDir)) {
+      if (name.startsWith('tiles_')) removeDirSafe(path.join(workDir, name))
+    }
   } else {
     console.log(`\n[satellite] 中间帧保留在：${path.relative(ROOT, workDir)}`)
   }
