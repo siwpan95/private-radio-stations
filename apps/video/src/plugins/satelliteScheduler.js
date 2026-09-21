@@ -97,6 +97,13 @@ class SatelliteScheduler extends Service {
   }
 }
 
-export default function satelliteScheduler(ctx, cfg) {
-  ctx.plugin(SatelliteScheduler, cfg)
+// 声明依赖：本服务读 ctx.config.satellite，必须排在 config 插件之后
+// （loader 用它做 HMR 依赖排序，缺了会与 channels 等插件不一致）。
+SatelliteScheduler.inject = ['config']
+
+export default function satelliteSchedulerPlugin(ctx) {
+  // 注意：与 channels / recorder 等既有插件保持一致，**不传 cfg**
+  // （本服务的配置来自 ctx.config.satellite，不是自己的 config: 块；
+  //  传 undefined 进去会让 cordis 注册不出同名 Service，boot 校验直接失败）。
+  ctx.plugin(SatelliteScheduler)
 }
