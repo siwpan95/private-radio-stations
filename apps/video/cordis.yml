@@ -33,6 +33,21 @@ plugins:
       # 故需上溯两级到仓库根；可用环境变量 RESOLVER_PYTHON 覆盖。
       pythonCmd: !!js "process.env.RESOLVER_PYTHON || path.join(root, '..', '..', '.venv', 'Scripts', 'python.exe')"
 
+      # 卫星影像（NASA GIBS 公有领域数据，免费免注册）。
+      # 关键约束（本机实测，见 docs/SATELLITE_SOURCES.md）：
+      #   - GIBS 只提供静态瓦片，**没有现成的视频流**，必须离线渲染成 mp4；
+      #   - 本机**无可用硬件编码**（nvenc/qsv/amf 全部实测失败），软件编码
+      #     转码速度仅 0.03x~0.30x，**无法做到实时**，故不能做成直播频道；
+      #   - 因此采用「npm run satellite 离线生成 mp4 → 当点播源转播」，
+      #     复用现有 -c copy 路径，无需改动 streamer.js。
+      # 生成：npm run satellite -- --days 5
+      satellite:
+        enabled: true
+        dir: satellite        # 成品目录（相对 apps/video）
+        source: modis         # modis | viirs | weld
+        zoom: 3               # 0..9，越大越清晰越耗流量
+        days: 5               # 多日合成，减轻 MODIS 条带缝隙
+
   # 文件日志 + 内存错误环（实现来自 @relay/core，超限截断）。
   - id: logfile
     config:

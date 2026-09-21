@@ -22,7 +22,9 @@
     "portal": "cd ..\\..\\platform && npm run portal",
     "link:player": "node scripts/link-player.mjs",
     "bridge": "node scripts/localplayer-bridge.mjs",
-    "harness": "node harness/harness.mjs"
+    "harness": "node harness/harness.mjs",
+    "satellite": "node scripts/satellite.mjs",
+    "satellite:list": "node scripts/satellite.mjs --list"
   },
   "engines": {
     "node": ">=22"
