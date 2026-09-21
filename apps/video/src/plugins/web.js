@@ -10,6 +10,37 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PUBLIC = path.resolve(__dirname, '..', '..', 'public')
 
 class WebService extends WebBase {
+  // 卫星影像状态：列出已离线渲染好的成品（mp4），供面板直接转播。
+  // 设计要点（见 docs/SATELLITE_SOURCES.md）：卫星画面无法实时转码（本机无
+  // 硬件编码），因此由 npm run satellite 离线生成 mp4，这里只负责发现与列举。
+  satelliteStatus() {
+    const cfg = this.ctx.config.satellite || {}
+    // 注意：ctx.config.root 已是 apps/video（config.js 用 __dirname/'..','..' 解析），
+    // 不能再拼 'apps','video'，否则路径会变成 .../apps/video/apps/video 而永远列不出成品。
+    const dir = path.resolve(this.ctx.config.root, cfg.dir || 'satellite')
+    const out = { enabled: cfg.enabled !== false, dir, source: cfg.source, zoom: cfg.zoom, days: cfg.days, files: [] }
+    try {
+      if (fs.existsSync(dir)) {
+        for (const f of fs.readdirSync(dir)) {
+          if (!f.toLowerCase().endsWith('.mp4')) continue
+          const p = path.join(dir, f)
+          const st = fs.statSync(p)
+          out.files.push({
+            name: f,
+            size: st.size,
+            mtime: st.mtime.toISOString(),
+            url: 'file:///' + p.replace(/\\/g, '/'),
+          })
+        }
+        // 新的排前面
+        out.files.sort((a, b) => (a.mtime < b.mtime ? 1 : -1))
+      }
+    } catch {
+      /* 目录不可读时返回空列表，不影响 /api/status 整体可用 */
+    }
+    return out
+  }
+
   // 所有可用的观看地址（局域网 IP 优先）
   shareUrls() {
     const c = this.ctx.config
@@ -49,6 +80,7 @@ class WebService extends WebBase {
       if (resolver) s.platformCount = resolver.platformsList().length
       if (settings) s.settings = settings.status()
       if (launcher) s.launcher = launcher.status()
+      s.satellite = this.satelliteStatus()
       return this.json(res, 200, s)
     }
 

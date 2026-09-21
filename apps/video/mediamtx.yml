@@ -12,6 +12,11 @@ logFile: data/logs/mediamtx.log
 #   WebRTC  :8889   -> http://IP:8889/live/（浏览器低延迟播放页）
 rtsp: yes
 rtspAddress: :8554
+# 只保留 TCP 传输。MediaMTX 默认 rtspTransports=[udp, multicast, tcp] 会额外绑定
+# UDP :8000/:8001；本机 apps/audio 的面板正占用 8000，同机同时跑音频与视频时
+# MediaMTX 会以「listen udp :8000: bind: Only one usage of each socket address」
+# 直接启动失败。streamer.js 推流本就固定 -rtsp_transport tcp，只留 TCP 无副作用。
+rtspTransports: [tcp]
 rtmp: yes
 rtmpAddress: :1935
 hls: yes

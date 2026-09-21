@@ -75,10 +75,24 @@ const ConfigSchema = Schema.object({
   channelsDir: Schema.string().default('playlists'),
   liveDir: Schema.string().default('src/live'),
   pythonCmd: Schema.string().default('python'),
+  // 卫星影像（NASA GIBS 公有领域数据，离线渲染为 mp4 后当点播源转播）。
+  // 说明：本机无可用硬件编码（nvenc/qsv/amf 实测全失败），软件编码无法实时，
+  // 故卫星画面走「离线渲染 → 成品 mp4」路径，由 station/streamer 以 -c copy 播放。
+  // 生成命令：npm run satellite -- --days 5
+  satellite: Schema.object({
+    enabled: Schema.boolean().default(true),
+    // 成品视频所在目录（相对项目根）
+    dir: Schema.string().default('satellite'),
+    // 默认源与缩放级别（对应 scripts/satellite.mjs 的 SOURCES）
+    source: Schema.string().default('modis'),
+    zoom: Schema.number().default(3),
+    // 多日合成天数（用于延时与 lighten 混合减轻条带缝隙）
+    days: Schema.number().default(5),
+  }).default({}),
 })
 
 // P8A 白名单：config 行热更新时，仅结构性无关的键在下一次动作生效
-const HOT_KEYS = ['transcode', 'record', 'pythonCmd', 'liveDir']
+const HOT_KEYS = ['transcode', 'record', 'pythonCmd', 'liveDir', 'satellite']
 
 export default function configPlugin(ctx, rawConfig = {}) {
   // 注意：config:update 处理器必须在 Service 构造器里注册（插件函数作用域拿不到
