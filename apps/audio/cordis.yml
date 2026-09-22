@@ -6,7 +6,7 @@ plugins:
   # MUST stay first so ctx.config is available to the services below.
   - id: config
     config:
-      port: !!js "Number(process.env.PORT) || 8000"
+      port: !!js "Number(process.env.PORT) || 8400"
       host: 0.0.0.0
       defaultBitrate: 128
       chunkSize: 4096

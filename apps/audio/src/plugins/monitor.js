@@ -150,7 +150,7 @@ class MonitorService extends Service {
   /** 本服务自己的流地址（播放器与本服务同机，走 loopback）。 */
   streamUrl(mount) {
     const m = mount || this.mount || 'stream'
-    const port = this.ctx.config && this.ctx.config.port ? this.ctx.config.port : 8000
+    const port = this.ctx.config && this.ctx.config.port ? this.ctx.config.port : 8400
     if (m === 'hls') return `http://127.0.0.1:${port}/hls/live.m3u8`
     if (m === 'stream') return `http://127.0.0.1:${port}/stream`
     return `http://127.0.0.1:${port}/stream/${m}`
