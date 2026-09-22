@@ -47,6 +47,9 @@ plugins:
         source: modis         # modis | viirs | weld
         zoom: 3               # 0..9，越大越清晰越耗流量
         days: 5               # 多日合成，减轻 MODIS 条带缝隙
+        auto: true            # 是否启用每日自动生成（cordis 调度服务 + WorkBuddy 自动化双冗余）
+        hour: 3               # 墙钟触发小时（0..23），启动晚则 5 分钟后补跑
+        keep: 7               # 保留最近 N 份成品，超出则裁剪
 
   # 文件日志 + 内存错误环（实现来自 @relay/core，超限截断）。
   - id: logfile
@@ -89,3 +92,6 @@ plugins:
 
   # HTTP API + 控制面板 UI。
   - id: web
+
+  # 每日自动生成卫星影像：按墙钟 hour:00 触发（双重调度冗余之一）。
+  - id: satelliteScheduler

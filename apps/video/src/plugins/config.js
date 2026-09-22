@@ -88,6 +88,10 @@ const ConfigSchema = Schema.object({
     zoom: Schema.number().default(3),
     // 多日合成天数（用于延时与 lighten 混合减轻条带缝隙）
     days: Schema.number().default(5),
+    // 每日自动生成（双重调度冗余：cordis 调度服务 + WorkBuddy 自动化）
+    auto: Schema.boolean().default(true),
+    hour: Schema.number().min(0).max(23).default(3),
+    keep: Schema.number().min(1).max(90).default(7),
   }).default({}),
 })
 

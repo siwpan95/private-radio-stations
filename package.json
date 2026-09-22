@@ -24,7 +24,8 @@
     "bridge": "node scripts/localplayer-bridge.mjs",
     "harness": "node harness/harness.mjs",
     "satellite": "node scripts/satellite.mjs",
-    "satellite:list": "node scripts/satellite.mjs --list"
+    "satellite:list": "node scripts/satellite.mjs --list",
+    "satellite:daily": "node scripts/satellite-daily.mjs"
   },
   "engines": {
     "node": ">=22"
