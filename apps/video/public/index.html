@@ -83,6 +83,23 @@
       <div id="pp-state" class="muted" style="margin-top:10px;">—</div>
     </section>
 
+    <!-- 卫星影像区（NASA GIBS 离线渲染成品） -->
+    <section class="card">
+      <h2>🛰️ 卫星影像（NASA GIBS · 离线渲染）</h2>
+      <p class="muted">每日 03:00 自动生成（cordis 调度服务 + WorkBuddy 自动化双冗余，共用
+        <code>scripts/satellite-daily.mjs</code>，内置进程锁）。成品目录：<code id="sat-dir">—</code></p>
+      <div class="row">
+        <button type="button" class="btn primary" id="sat-generate">🔄 立即生成一次</button>
+        <button type="button" class="btn" id="sat-refresh">刷新列表</button>
+        <span class="muted">生成需数分钟（zoom/days 决定），期间重复点击不会重复跑</span>
+      </div>
+      <div id="sat-state" class="muted" style="margin-top:10px;">—</div>
+      <table id="sat-files" style="margin-top:10px;width:100%;">
+        <thead><tr><th>文件名</th><th>体积</th><th>生成时间</th><th>操作</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
     <!-- 频道库区 -->
     <section class="card">
       <h2>📡 IPTV 频道库</h2>

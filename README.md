@@ -126,6 +126,56 @@ npm run bridge          # 或双击 start-bridge.bat
 node --test scripts/localplayer-bridge.test.mjs   # 也包含在 npm test 里
 ```
 
+## 卫星影像（NASA GIBS · 离线渲染）
+
+卫星影像走的是「**离线渲染 → 点播转播**」路线，不是直播频道：
+
+- **数据源**：NASA GIBS（公有领域，免费免注册）。GIBS 只提供静态瓦片，**没有现成视频流**，
+  必须先用 ffmpeg 离线渲染成 mp4。
+- **为什么不能做直播**：本机无可用硬件编码（nvenc/qsv/amf 实测全失败），软件编码速度仅
+  0.03x~0.30x，**无法实时**，故渲染成 mp4 后当作点播源转播（复用既有的 `-c copy` 路径，无需改 streamer.js）。
+
+### 触发方式
+
+| 触发 | 入口 | 说明 |
+|---|---|---|
+| 面板手动 | 视频面板「🛰️ 卫星影像」卡片 → **立即生成一次** | `POST /api/satellite/generate`：派生 `scripts/satellite-daily.mjs`（detached + unref，返回 202），由它再拉起渲染脚本 `scripts/satellite.mjs` 抓取 GIBS 瓦片、合成 mp4 |
+| 面板查询 | `GET /api/satellite` | 列举成品目录（`apps/video/satellite/`）里的 `satellite-YYYY-MM-DD.mp4` 与最新 `satellite.mp4` |
+| 每日自动 | 每日 03:00（墙钟） | cordis `satelliteScheduler` 服务（`cordis.yml` 里 `satellite.hour=3`）+ **WorkBuddy 自动化**双冗余，二者共用同一条 `scripts/satellite-daily.mjs` |
+
+`satellite-daily.mjs` 内部有**进程锁**（`apps/video/satellite/.run.lock` 记录 PID + 存活判定），
+所以即便调度服务与 WorkBuddy 自动化同时触发，也只真正跑一次；生成完成会把最新一份复制为
+`satellite.mp4` 作为稳定入口，并裁剪超过 `keep`（默认 7）份的旧档。
+
+### 配置
+
+集中在 `apps/video/cordis.yml` 的 `config → satellite` 段：
+
+| 键 | 默认 | 含义 |
+|---|---|---|
+| `enabled` | `true` | 是否启用整条链路 |
+| `dir` | `satellite` | 成品目录（相对 `apps/video`）|
+| `source` | `modis` | 图层源：`modis` / `viirs` / `weld` |
+| `zoom` | `3` | 0..9，越大越清晰、越耗流量 |
+| `days` | `5` | 多日合成，减轻 MODIS 条带缝隙 |
+| `auto` | `true` | 是否启用每日自动生成 |
+| `hour` | `3` | 墙钟触发小时；进程在触发点之后启动则 5 分钟后补跑一次 |
+| `keep` | `7` | 保留最近 N 份成品 |
+
+命令：`npm run satellite -- --days 5`（更多用法见 `scripts/satellite.mjs` 头部注释，含 `--list` / `--source` / `--zoom` / `--keep-tiles` 等）。
+
+### ⚠️ 实测限制：卫星源当前拉不动
+
+本机实测：**GIBS 瓦片抓取不通，卫星影像拉不动**。连续 3 次拉流失败后，转播 `station` 状态机
+已**停止自动重试**，面板提示「检查源地址或网络后点『开始转播』/『立即生成』重试」。
+
+> 注意：这条「连续 3 次短命失败才停止重试」的提示与文案，是**转播 station 状态机既有行为**
+> （见 `apps/video/README.md`「已知限制」），并非卫星脚本本身抛出的错误——它只是如实反映了
+> 「源拉不动」这一事实。根因是 GIBS 瓦片抓取/网络不通，不是代码逻辑 bug。
+>
+> 排查方向：确认本机能否直连 GIBS 瓦片服务（`gibs.earthdata.nasa.gov`），或源地址/代理是否变化；
+> 网络恢复后，手动点面板「立即生成一次」或「开始转播」即可重试。
+
 ## 开发与门禁
 
 ```bash
