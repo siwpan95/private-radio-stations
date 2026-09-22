@@ -260,6 +260,67 @@ function renderRecordings(s) {
   }
 }
 
+// 卫星影像（NASA GIBS 离线渲染成品）：列表 + 一键转播 + 手动触发每日生成。
+function renderSatellite(s) {
+  const sat = s.satellite
+  const tbody = $('#sat-files tbody')
+  tbody.innerHTML = ''
+  if (!sat || !sat.enabled) {
+    $('#sat-state').textContent = '卫星影像未启用（satellite.enabled=false）'
+    $('#sat-generate').disabled = true
+    tbody.innerHTML = '<tr><td colspan="4" class="muted">未启用</td></tr>'
+    return
+  }
+  $('#sat-dir').textContent = sat.dir
+  $('#sat-generate').disabled = false
+  if (!sat.files || !sat.files.length) {
+    $('#sat-state').textContent = '尚无成品 —— 点「立即生成一次」，或等每日 03:00 自动跑'
+    tbody.innerHTML = '<tr><td colspan="4" class="muted">暂无成品</td></tr>'
+    return
+  }
+  const latest = sat.files[0]
+  $('#sat-state').textContent =
+    `共 ${sat.files.length} 份 · 最新 ${latest.name}（${fmtBytes(latest.size)} · ${fmtTime(Date.parse(latest.mtime))}）` +
+    ` · 源 ${sat.source || '?'} · zoom ${sat.zoom}`
+
+  for (const f of sat.files) {
+    const tr = document.createElement('tr')
+    const td1 = document.createElement('td')
+    td1.textContent = f.name
+    const td2 = document.createElement('td')
+    td2.textContent = fmtBytes(f.size)
+    const td3 = document.createElement('td')
+    td3.textContent = fmtTime(Date.parse(f.mtime))
+    const td4 = document.createElement('td')
+
+    const play = document.createElement('button')
+    play.className = 'btn tiny primary'
+    play.textContent = '▶ 转播'
+    play.addEventListener('click', async () => {
+      await api('/api/relay', {
+        method: 'POST',
+        body: JSON.stringify({ url: f.url, name: '卫星影像 ' + f.name, transcode: false, record: false }),
+      })
+      refresh()
+    })
+
+    const copy = document.createElement('button')
+    copy.className = 'btn tiny'
+    copy.textContent = '复制 file://'
+    copy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(f.url)
+        copy.textContent = '已复制'
+        setTimeout(() => { copy.textContent = '复制 file://' }, 1500)
+      } catch { /* 非安全上下文时剪贴板不可用，忽略 */ }
+    })
+
+    td4.append(play, copy)
+    tr.append(td1, td2, td3, td4)
+    tbody.append(tr)
+  }
+}
+
 function render(s) {
   state = s
   $('#version').textContent = 'v' + (s.version || '?')
@@ -272,6 +333,7 @@ function render(s) {
   renderPresets(s)
   renderRecordings(s)
   renderLauncher(s)
+  renderSatellite(s)
   $('#btn-record').textContent = s.recorder.running ? '⏹ 停止录像' : '⏺ 开始录像'
   $('#btn-start').disabled = s.mode === 'relay'
   $('#btn-stop').disabled = s.mode !== 'relay'
@@ -594,6 +656,27 @@ function bindEvents() {
   $('#pp-stop').addEventListener('click', async () => {
     await api('/api/player/control', { method: 'POST', body: JSON.stringify({ action: 'stop' }) }); refresh()
   })
+
+  // ===== 卫星影像（离线成品 + 手动触发每日生成）=====
+  $('#sat-generate').addEventListener('click', async () => {
+    const btn = $('#sat-generate')
+    btn.disabled = true
+    btn.textContent = '⏳ 已触发，后台生成中…'
+    try {
+      const r = await api('/api/satellite/generate', { method: 'POST', body: '{}' })
+      $('#sat-state').textContent = r && r.started
+        ? `已在后台启动生成（PID ${r.pid}），数分钟后点「刷新列表」`
+        : '触发失败：' + ((r && r.error) || '未知错误')
+    } catch (e) {
+      $('#sat-state').textContent = '触发失败：' + (e && e.message ? e.message : e)
+    }
+    setTimeout(() => {
+      btn.disabled = false
+      btn.textContent = '🔄 立即生成一次'
+      refresh()
+    }, 2000)
+  })
+  $('#sat-refresh').addEventListener('click', () => refresh())
 }
 
 bindEvents()

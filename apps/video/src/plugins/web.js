@@ -3,11 +3,13 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { spawn } from 'node:child_process'
 import { WebBase, lanIP } from '@relay/core/src/web-base.js'
 import { redactSecrets } from '@relay/core/src/settings.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PUBLIC = path.resolve(__dirname, '..', '..', 'public')
+const ROOT = path.resolve(__dirname, '..', '..', '..', '..')
 
 class WebService extends WebBase {
   // 卫星影像状态：列出已离线渲染好的成品（mp4），供面板直接转播。
@@ -102,6 +104,30 @@ class WebService extends WebBase {
     if (pathname === '/api/relay/stop' && req.method === 'POST') {
       station.stopRelay()
       return this.json(res, 200, station.status())
+    }
+
+    // ---- 卫星影像：成品列表 + 手动触发一次「每日生成」----
+    if (pathname === '/api/satellite' && req.method === 'GET') {
+      return this.json(res, 200, this.satelliteStatus())
+    }
+    if (pathname === '/api/satellite/generate' && req.method === 'POST') {
+      const st = this.satelliteStatus()
+      if (!st.enabled) return this.json(res, 400, { error: 'satellite.enabled=false，已禁用' })
+      const script = path.resolve(ROOT, 'scripts', 'satellite-daily.mjs')
+      if (!fs.existsSync(script)) {
+        return this.json(res, 500, { error: '缺少 scripts/satellite-daily.mjs' })
+      }
+      // 复用每日编排脚本：它内置进程锁，因此重复点击、或与 cordis 调度服务 /
+      // WorkBuddy 自动化同时触发时，都只会真正生成一次。
+      // 生成耗时数分钟，故 detached + unref 后台跑，接口立即返回 202。
+      const child = spawn(process.execPath, [script], {
+        cwd: ROOT,
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: true,
+      })
+      child.unref()
+      return this.json(res, 202, { started: true, pid: child.pid, dir: st.dir })
     }
 
     // ---- 桌面播放器快捷入口（前台拉起 PluginPlayer + 控制通道）----
