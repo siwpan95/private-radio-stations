@@ -174,6 +174,18 @@ export function spawnWithWatchdog(argv, stdioFd, timeoutMinutes = DEFAULT_TIMEOU
   })
 }
 
+// 进程是否还活着（Windows 上 process.kill(pid, 0) 对存在但无权访问的进程会抛 EPERM，
+// 那也算"活着"）。用于判断 .run.lock 里的 PID 是否仍占据生成任务。
+export function pidAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (e) {
+    return e && e.code === 'EPERM'
+  }
+}
+
 async function main() {
   const cfg = parseSatelliteConfig()
   if (cfg.enabled === false || cfg.auto === false) {
@@ -187,16 +199,30 @@ async function main() {
   const logPath = path.join(outDir, `.daily-${date}.log`)
   const lockPath = path.join(outDir, '.run.lock')
 
-  // 进程锁：避免 cordis 服务与 WorkBuddy 自动化并发；锁 <6h 视为进行中，跳过。
+  // 进程锁：避免 cordis 服务与 WorkBuddy 自动化并发；锁内记录 {pid, at}。
+  // 只要持锁进程还活着就跳过；进程已死（被 kill / 崩溃 / 断电残留）则视为陈旧锁立即接管。
+  //   实测教训：只用「锁文件年龄 <6h」判断时，一次被中断的生成会让接下来 6 小时内
+  //   的所有触发全部静默跳过（包括面板「立即生成一次」和 cordis 调度）。
   if (fs.existsSync(lockPath)) {
+    let held = null
+    try {
+      held = JSON.parse(fs.readFileSync(lockPath, 'utf8'))
+    } catch {
+      held = null // 老格式（只有时间戳）或内容损坏，退回按年龄判断
+    }
     const age = Date.now() - fs.statSync(lockPath).mtimeMs
-    if (age < 6 * 3600 * 1000) {
-      console.log('[satellite-daily] 已有进行中的运行（锁 <6h），跳过。')
+    const stillRunning = held && Number.isInteger(held.pid)
+      ? pidAlive(held.pid)
+      : age < 6 * 3600 * 1000
+    if (stillRunning) {
+      console.log(
+        `[satellite-daily] 已有进行中的运行（PID ${held && held.pid ? held.pid : '未知'}），跳过。`
+      )
       process.exit(0)
     }
-    fs.rmSync(lockPath, { force: true }) // 锁过旧：上次可能崩溃残留，清理后继续
+    fs.rmSync(lockPath, { force: true }) // 持锁进程已不在：清理后继续
   }
-  fs.writeFileSync(lockPath, String(Date.now()))
+  fs.writeFileSync(lockPath, JSON.stringify({ pid: process.pid, at: Date.now() }))
 
   const argv = [
     SAT_SCRIPT,
