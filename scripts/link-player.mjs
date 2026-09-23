@@ -1,7 +1,7 @@
 // link-player — 把 PluginPlayer 源码仓的构建产物同步进本仓挂载点
 // ---------------------------------------------------------------------------
 // 联动关系（2026-09-14 修复断链）：
-//   · 供给方：独立仓 siwpan/pluginplayer（本机副本默认 C:\pluginplayer-main），
+//   · 供给方：独立仓 siwpan/pluginplayer（默认取同级仓 ../pluginplayer，可用 PP_SRC / --src 覆盖），
 //     用 build.py 产出 dist/（pluginplayer.exe + FFmpeg/SDL3/MinGW DLL + plugins/）。
 //   · 消费方：apps/video 的 launcher 插件（面板「快捷入口」，RPC 7921）与
 //     apps/audio 的 monitor 插件（面板「本机监听」，RPC 7911）。
@@ -13,7 +13,7 @@
 // （见 apps/*/src/plugins/*.js 的 FALLBACK_EXE），构建完即生效。
 //
 // 用法：
-//   node scripts/link-player.mjs                  # 源 = C:\pluginplayer-main
+//   node scripts/link-player.mjs                  # 源 = 同级仓 ../pluginplayer（或 PP_SRC）
 //   node scripts/link-player.mjs D:\pp            # 指定源码仓根目录
 //   node scripts/link-player.mjs --dry            # 只报告将同步什么，不落盘
 //   node scripts/link-player.mjs --src X --dest Y # 显式指定（dest 覆盖仅用于自测）
@@ -33,7 +33,8 @@ const val = (name) => {
   return i >= 0 ? argv[i + 1] : undefined
 }
 const positional = argv.find((a) => !a.startsWith('--') && !flagVals.has(a))
-const srcRepo = val('src') || positional || process.env.PP_SRC || 'C:\\pluginplayer-main'
+// 2026-09-23 去本地化：默认源改同级仓推导（原 C:\pluginplayer-main 已失效）；缺产物时由下方 existsSync 报错退出
+const srcRepo = val('src') || positional || process.env.PP_SRC || path.resolve(ROOT, '..', 'pluginplayer')
 const SRC = path.join(srcRepo, 'dist')
 const DEST = path.resolve(val('dest') || path.join(ROOT, 'external', 'pluginplayer', 'dist'))
 
@@ -63,6 +64,7 @@ if (!fs.existsSync(srcExe)) {
   console.error('        cd /d ' + srcRepo)
   console.error('        python build.py --release')
   console.error('      前置：vendor/ 依赖（python tools\\fetch_deps.py）与 MinGW g++。')
+  console.error('      源码仓也可用 --src <路径> / 位置参数 / 环境变量 PP_SRC 指定。')
   process.exit(1)
 }
 
