@@ -1,6 +1,6 @@
 ---
 name: relay-stations
-description: Maintain the relay stations monorepo (C:\private-radio-stations-master; 上游曾位于 G:/tools、G:/repos、D:/private-radio-stations-master). Cordis-based video relay + radio station (npm workspaces).
+description: Maintain the relay stations monorepo (本 SKILL.md 所在仓库根). Cordis-based video relay + radio station (npm workspaces).
 agent_created: true
 ---
 
@@ -14,7 +14,7 @@ npm workspaces：packages/core（loader/config-validate/ffmpeg-args/logfile/pres
 - `apps/video` 的 `launcher`（面板「快捷入口」，可见窗口，RPC 7921）
 - `apps/audio` 的 `monitor`（面板「本机监听」，无窗口跟随转播，RPC 7911）
 
-exe 解析（两侧同一套）：`config exe` > 环境变量 `PP_EXE` > **候选探测**：本仓 `external/pluginplayer/dist/pluginplayer.exe` → 源码仓 `C:\pluginplayer-main\dist\pluginplayer.exe`（取第一个存在的）。
+exe 解析（两侧同一套）：`config exe` > 环境变量 `PP_EXE` > **候选探测**：本仓 `external/pluginplayer/dist/pluginplayer.exe` → 源码仓（环境变量 `PP_REPO` 指向 pluginplayer 仓根）的 `dist\pluginplayer.exe`（取第一个存在的）。
 - 投放：`python scripts/fetch-deps.py --features`（从 Gitee 拉**最新发行版** —— 运行时读 `/releases/latest` 的 302 解析 tag，再取 `SHA256SUMS.txt` 校验；发新版无需改脚本，`--force` 换版本）
   或 `npm run link:player`（同步源码仓 `build.py` 出的 dist，整目录）
 - `external/` 是 .gitignore 的挂载点，不入库
@@ -35,8 +35,8 @@ exe 解析（两侧同一套）：`config exe` > 环境变量 `PP_EXE` > **候�
 ## 已知陷阱
 - 媒体模型差异：视频=推送型（MediaMTX），音频=拉取型（Node http 直发）——不要尝试单进程共面板
 - ffmpeg/mediamtx 二进制不入版本库
-- **不要在源码/配置里写死盘符路径**（曾出现 `D:\private-radio-stations-master\...`、
-  `G:\local\pluginplayer\dist\pluginplayer.exe`）。仓库换盘符（G:→D:→C:）后它们全部静默失效，
+- **不要在源码/配置里写死盘符路径**（曾出现写死仓库根的绝对路径、
+  写死播放器 dist 的绝对路径）。仓库换盘符（G:→D:→C:）后它们全部静默失效，
   表现是 `[monitor]/[launcher] 播放器不存在: <死路径>`。外部资产路径一律「相对本仓 + 候选探测」。
 - dist 必须整目录：`pluginplayer.exe` 依赖同目录的 FFmpeg/SDL3/MinGW DLL 与 `plugins/`
   （含 `manifest.sha256` 完整性清单，与 DLL 不匹配会被宿主拒载）

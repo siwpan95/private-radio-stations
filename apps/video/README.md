@@ -147,7 +147,7 @@ Gitee：https://gitee.com/siwpan/private-radio-stations/tree/video/（本项目�
 ## 📁 目录布局
 
 ```
-G:\tools\video\              ← 项目根（转播站本体）
+apps/video/                  ← 项目根（转播站本体）
   cordis.yml / mediamtx.yml / presets.json / package.json / start-stream.bat / README.md
   src\ plugins\              ← Node 插件（config/mediamtx/station/streamer/recorder/presets/web/channels/resolver…）
   src\ live\                  ← real-url 平台解析器（59 平台，GPL-2.0）

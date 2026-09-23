@@ -36,7 +36,7 @@ extension/
 1. 打开 `edge://extensions/`
 2. 右上角打开 **开发人员模式 / Developer mode**
 3. 点 **加载解压缩的扩展 / Load unpacked**
-4. 选择 `G:\tools\private-radio-stations\apps\audio\extension\` 目录（含 `manifest.json` 的那一层）
+4. 选择本仓 `apps/audio/extension/` 目录（含 `manifest.json` 的那一层）
 5. 工具栏出现电台图标 → 点开即可用
 6. 右键图标 → **选项 / Options** 配置服务器地址
 
@@ -45,7 +45,7 @@ extension/
 1. 打开 `chrome://extensions/`
 2. 右上角打开 **开发者模式 / Developer mode**
 3. 点 **加载已解压的扩展程序 / Load unpacked**
-4. 选择 `G:\tools\private-radio-stations\apps\audio\extension\` 目录
+4. 选择本仓 `apps/audio/extension/` 目录
 5. 工具栏点扩展图标（如未固定，点拼图图标 🧩 固定到工具栏）
 6. 右键图标 → **选项 / Options** 配置
 
