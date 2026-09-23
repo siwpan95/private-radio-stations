@@ -19,11 +19,15 @@ import path from 'node:path'
 
 // PluginPlayer（独立仓 siwpan/pluginplayer）不属于本仓库，按候选顺序探测：
 //   1. 本仓挂载点 external/pluginplayer/dist/ —— scripts/fetch-deps.py 投放
-//   2. 源码仓构建产物 C:\pluginplayer-main\dist\ —— build.py 产出，开发时直接联动
+//   2. 源码仓构建产物 —— PP_REPO 指向 pluginplayer 仓根，取其 dist\（开发时直接联动）
 // 两者都必须**整目录**使用：exe 依赖同目录的 DLL 与 plugins/（只拷 exe 会崩）。
 // 可用 config plugins.launcher.exe 或环境变量 PP_EXE 覆盖（相对路径按应用根解析）。
 const DEFAULT_EXE_REL = path.join('..', '..', 'external', 'pluginplayer', 'dist', 'pluginplayer.exe')
-const FALLBACK_EXE = 'C:\\pluginplayer-main\\dist\\pluginplayer.exe'
+// 2026-09-23 去本地化：原 FALLBACK_EXE 硬编码开发机专用路径（已不存在）。
+// 现由 PP_REPO 环境变量指向 pluginplayer 仓根推导；未设则为 null，由 PP_EXE / 本仓挂载点候选兜底。
+const REPO_EXE = process.env.PP_REPO
+  ? path.join(process.env.PP_REPO, 'dist', 'pluginplayer.exe')
+  : null
 
 /** 控制通道客户端：换行分隔 JSON over TCP（协议见 pluginplayer src/core/control.h）。 */
 class Rpc {
@@ -133,7 +137,7 @@ class LauncherService extends Service {
     const root = this.ctx.config.root || '.'
     const raw = this.cfg.exe || process.env.PP_EXE
     if (raw) return path.isAbsolute(raw) ? raw : path.resolve(root, raw)
-    const candidates = [path.resolve(root, DEFAULT_EXE_REL), FALLBACK_EXE]
+    const candidates = [path.resolve(root, DEFAULT_EXE_REL), REPO_EXE].filter(Boolean)
     // 都探测不到时返回首个候选：报错信息里给出的是「本仓挂载点」这个正解，便于照做投放。
     return candidates.find((p) => fs.existsSync(p)) || candidates[0]
   }
