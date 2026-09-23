@@ -1,7 +1,10 @@
 # 📺📻 本地转播站（monorepo）
 
-C:\private-radio-stations-master —— 视频转播与音频电台的整合仓库（npm workspaces，独立仓 siwpan/private-radio-stations）。
-（上游本地副本曾位于 `G:\repos\private-radio-stations`、`D:\private-radio-stations-master`；本文档一律用当前副本路径。）
+> 仓库：<https://gitee.com/siwpan/private-radio-stations> ｜ 许可：MIT（见 [LICENSE](LICENSE)）
+> 注：文中 <PATH> 为路径占位符，请替换为你本机实际的目录 / 可执行文件路径。
+
+<PATH> —— 视频转播与音频电台的整合仓库（npm workspaces，独立仓 siwpan/private-radio-stations）。
+（上游本地副本曾位于 `<PATH>`、`<PATH>`；本文档一律用当前副本路径。）
 
 ```
 private-radio-stations/
@@ -28,7 +31,7 @@ exe 解析顺序（`apps/*/src/plugins/{launcher,monitor}.js`，两侧同一套�
 
 1. `cordis.patch.yml` 的 `exe` 配置；
 2. 环境变量 `PP_EXE`；
-3. 候选探测：本仓 `external/pluginplayer/dist/pluginplayer.exe` → 源码仓 `C:\pluginplayer-main\dist\pluginplayer.exe`（取第一个存在的）。
+3. 候选探测：本仓 `external/pluginplayer/dist/pluginplayer.exe` → 源码仓 `<PATH>`（取第一个存在的）。
 
 ```bash
 python scripts/fetch-deps.py --features   # 从 Gitee 拉「最新发行版」到 external/pluginplayer/dist（运行时解析 tag，不写死版本）
@@ -41,14 +44,14 @@ npm run link:player -- --dry              # 只报告将同步什么，不落盘
 > 所以播放器发新版**不需要改本仓任何文件**。`--force` 可强制换成新版。
 
 > ⚠️ `dist/` 必须**整目录**使用：exe 依赖同目录的 FFmpeg/SDL3/MinGW DLL 与 `plugins/`，只拷 exe 会启动失败。
-> ⚠️ 不要在源码里写死盘符路径（`D:\`、`G:\`）——仓库换盘符就会静默断链；解析已一律改为相对本仓 + 候选探测。
+> ⚠️ 不要在源码里写死盘符路径（`<PATH>`、`<PATH>`）——仓库换盘符就会静默断链；解析已一律改为相对本仓 + 候选探测。
 
 ## 快速开始
 
 > 提示：按 `W+R` 输入 `powershell` 打开终端再执行下方命令——cmd 的 `cd` 不能跨盘符，PowerShell 无此问题。
 
 ```bash
-cd G:\repos\private-radio-stations
+cd <PATH>
 npm install --registry=https://registry.npmmirror.com
 npm run video   # 视频面板 http://localhost:8100
 npm run radio   # 电台面板 http://localhost:8000
@@ -66,7 +69,7 @@ npm run portal  # 统一门户（9000 已不再常驻，见 allin-platform start
 | audio | 8000 | /stream、/stream/<k>、/hls/* |
 | **localplayer-bridge** | **8787** | `/api/list`（给「轻量播放器」扩展用，见下节）|
 
-> 本表与唯一事实源 `G:\docs\md\allin主工作区\端口分配表.md` 同步（2026-08-24 起，新服务先查表再选端口）。
+> 本表与唯一事实源 `<PATH>` 同步（2026-08-24 起，新服务先查表再选端口）。
 
 ## 联动：把「轻量播放器」扩展当本项目的播放器
 
@@ -205,7 +208,7 @@ git hooks（`npm install` 自动安装）：pre-commit = 快速门禁（语法+y
 
 ## 仓库索引标注（2026-08-27 · siwpan 统一治理）
 
-> 本仓现行 master = 整合版（Node.js + Cordis 三簇：portal/video/audio + harness）；3.0 分支 = 转播版 Relay Only；2.0/archived* = 归档。本地对应 C:\private-radio-stations-master（上游曾位于 G:\repos\private-radio-stations）。
+> 本仓现行 master = 整合版（Node.js + Cordis 三簇：portal/video/audio + harness）；3.0 分支 = 转播版 Relay Only；2.0/archived* = 归档。本地对应 <PATH>（上游曾位于 <PATH>）。
 > 本标注为发布面统一追加，不改变原有内容。
 
 ---
