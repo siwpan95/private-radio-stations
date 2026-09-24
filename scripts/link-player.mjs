@@ -33,7 +33,7 @@ const val = (name) => {
   return i >= 0 ? argv[i + 1] : undefined
 }
 const positional = argv.find((a) => !a.startsWith('--') && !flagVals.has(a))
-// 2026-09-23 去本地化：默认源改同级仓推导（原 C:\pluginplayer-main 已失效）；缺产物时由下方 existsSync 报错退出
+// 2026-09-23 去本地化：默认源改同级仓推导（原路径已失效）；缺产物时由下方 existsSync 报错退出
 const srcRepo = val('src') || positional || process.env.PP_SRC || path.resolve(ROOT, '..', 'pluginplayer')
 const SRC = path.join(srcRepo, 'dist')
 const DEST = path.resolve(val('dest') || path.join(ROOT, 'external', 'pluginplayer', 'dist'))
