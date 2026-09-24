@@ -18,7 +18,7 @@
 ## 分层纪律
 
 - **离线黄金值**只覆盖本表两 cmd；video/radio 端到端 smoke（scripts/smoke.mjs）需要运行中的服务 + ffmpeg + 网络测试源，属在线冒烟层，由 npm run smoke:* 手动执行，不纳入 harness。
-- 无新增端口；服务端口登记见 G:\docs\md\allin主工作区\ports.yaml / 端口分配表.md。
+- 无新增端口；服务端口登记见 G:\allin\docs\md\allin主工作区\ports.yaml / 端口分配表.md。
 - 运行：node harness/harness.mjs；全绿 exit 0，任何分歧/报错 exit 1。
 
 ## E4/E5（2026-08-27 补）
