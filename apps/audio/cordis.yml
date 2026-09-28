@@ -47,5 +47,22 @@ plugins:
   # presets.json read/write (dedupe + atomic write).
   - id: presets
 
+  # musickit 随机渲染音源（S4 自 python musickit_source.py 迁移：渲染子进程队列+状态+API）
+  - id: musickit
+    config:
+      root: G:\\music\\musickit
+      python: F:\\Python314\\python.exe
+      channel: random
+      bars: 32
+      format: mp3
+      maxTracks: 5
+      fusion: false
+      releaseSafe: false
+      timeoutSec: 600
+      cacheDir: G:\\music\\musickit\\radio\\render_cache
+      keep: 20
+      queueDepth: 3
+      maxFails: 5
+
   # HTTP API + control-panel UI.
   - id: web
