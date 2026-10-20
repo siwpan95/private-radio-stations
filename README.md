@@ -74,7 +74,7 @@ npm run portal  # 统一门户（9000 已不再常驻，见 allin-platform start
 ## 联动：把「轻量播放器」扩展当本项目的播放器
 
 `scripts/localplayer-bridge.mjs` 是一个零依赖的聚合桥，把本项目的媒体源翻译成
-[轻量播放器（Chrome / Edge 扩展）](../localplayer-master)认识的清单契约
+[轻量播放器（Chrome / Edge 扩展）](https://gitee.com/siwpan/localplayer)认识的清单契约
 `GET /api/list -> [{name, path, type}]`，于是浏览器扩展可以直接当本项目的音视频播放器用。
 
 ```bash
