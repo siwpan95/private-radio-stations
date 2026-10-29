@@ -3,7 +3,7 @@
   "description": "编排 harness 组件清单（组合即数据：加组件只改本文件；enabled:false = 运行时下架）。",
   "runtime": {
     "node": "node",
-    "python": "F:/Python314/python.exe"
+    "python": "python"
   },
   "components": [
     {
