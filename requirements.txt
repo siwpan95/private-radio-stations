@@ -1,0 +1,12 @@
+
+# allin-repocheck-r6-fix (2026-11-15)
+pycryptodome
+PyExecJS
+mutagen
+waitress
+
+# allin-r6-local-dep (2026-11-15)
+-e ./apps/audio/archived/python-radio-relay-20260823/radio
+
+# allin-r6-local (2026-11-15) 运行时注入的内部模块声明
+# r6-local: shout
